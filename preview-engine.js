@@ -165,7 +165,19 @@
     var themeBtn = root.querySelector('.skeleton-' + config.slug + '__theme');
     var prevZone = root.querySelector('.skeleton-' + config.slug + '__zone--prev');
     var nextZone = root.querySelector('.skeleton-' + config.slug + '__zone--next');
+    injectRuntimeCss();
     applyTheme();
+
+    function injectRuntimeCss() {
+      var id = 'skeleton-rt-' + config.slug;
+      var existing = document.getElementById(id);
+      if (existing) existing.parentNode.removeChild(existing);
+      var s = '.skeleton-' + config.slug;
+      var styleEl = document.createElement('style');
+      styleEl.id = id;
+      styleEl.textContent = '@media (min-width:769px){' + s + '{height:100vh;max-height:100vh;overflow:hidden}}';
+      document.head.appendChild(styleEl);
+    }
 
     var source = config.pdfData ? { data: config.pdfData } : { url: config.pdfUrl };
     pdfjsLib.getDocument(source).promise.then(function (doc) {

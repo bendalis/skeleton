@@ -237,6 +237,13 @@ button { cursor: pointer; }
   background: var(--bg);
   box-sizing: border-box;
 }
+@media (min-width: 769px) {
+  .skeleton-preview {
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+  }
+}
 .skeleton-preview *, .skeleton-preview *::before, .skeleton-preview *::after { box-sizing: border-box; }
 .skeleton-preview[data-theme="dark"] {
   --bg: #0E0E0E;
@@ -502,6 +509,9 @@ button { cursor: pointer; }
       s + '__thumbs button[data-active="true"] canvas{outline:1px solid var(--accent)}',
       s + '__thumbs button[data-active="true"]{color:var(--fg)}',
       s + '__thumbs button span{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em}',
+      '@media (min-width:769px){',
+      s + '{height:100vh;max-height:100vh;overflow:hidden}',
+      '}',
       '@media (max-width:768px){',
       s + '__thumbs{display:none;max-height:96px}',
       s + '__thumbs[data-open="true"]{display:flex}',
