@@ -295,7 +295,10 @@
         drawSlot(pageCache.get(key), slot, slotEl);
         return;
       }
-      var slotWidth = slotEl.clientWidth || (stage.clientWidth / (views[index].pages.length || 1)) - 16;
+      var slotCount = views[index].pages.length || 1;
+      var availableWidth = stage.clientWidth - 32;
+      var slotWidth = slotEl.clientWidth || (slotCount > 1 ? (availableWidth - 8) / slotCount : availableWidth);
+      var slotHeight = stage.clientHeight - 32;
       var multi = (slot.half === 'full') ? 1 : 2;
       queuedPageRender(slot.pdfPage, function (page) {
         if (pageCache.has(key)) {
@@ -306,7 +309,9 @@
           return;
         }
         var v1 = page.getViewport({ scale: 1 });
-        var scale = (slotWidth * multi * dpr) / v1.width;
+        var scaleByWidth = (slotWidth * multi * dpr) / v1.width;
+        var scaleByHeight = slotHeight > 0 ? (slotHeight * dpr) / v1.height : Infinity;
+        var scale = Math.min(scaleByWidth, scaleByHeight);
         var viewport = page.getViewport({ scale: scale });
         var canvas = document.createElement('canvas');
         canvas.width = viewport.width;
@@ -329,6 +334,7 @@
         var slotCount = nextView.pages.length;
         var availableWidth = stage.clientWidth - 32;
         var slotWidth = slotCount > 1 ? (availableWidth - 8) / slotCount : availableWidth;
+        var slotHeight = stage.clientHeight - 32;
         nextView.pages.forEach(function (logical) {
           var slot = logicalPages[logical - 1];
           if (!slot) return;
@@ -338,7 +344,9 @@
             if (pageCache.has(key)) return;
             var v1 = page.getViewport({ scale: 1 });
             var multi = (slot.half === 'full') ? 1 : 2;
-            var scale = (slotWidth * multi * dpr) / v1.width;
+            var scaleByWidth = (slotWidth * multi * dpr) / v1.width;
+            var scaleByHeight = slotHeight > 0 ? (slotHeight * dpr) / v1.height : Infinity;
+            var scale = Math.min(scaleByWidth, scaleByHeight);
             var viewport = page.getViewport({ scale: scale });
             var canvas = document.createElement('canvas');
             canvas.width = viewport.width;
