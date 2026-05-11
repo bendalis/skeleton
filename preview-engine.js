@@ -64,30 +64,60 @@
 
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
 
-  function buildViews(total, frontSolo, backSolo, isMobile) {
+  function detectLogicalPages(pdf, frontSolo, backSolo) {
+    var pdfTotal = pdf.numPages;
+    if (pdfTotal === 0) return Promise.resolve([]);
+    var dimsP = [];
+    for (var i = 1; i <= pdfTotal; i++) {
+      (function (n) {
+        dimsP.push(pdf.getPage(n).then(function (page) {
+          var v = page.getViewport({ scale: 1 });
+          return { pdfPage: n, width: v.width, height: v.height };
+        }));
+      })(i);
+    }
+    return Promise.all(dimsP).then(function (dims) {
+      var refWidth = dims[0].width;
+      if (backSolo && dims.length > 1) refWidth = Math.min(refWidth, dims[dims.length - 1].width);
+      var slots = [];
+      dims.forEach(function (d) {
+        var isCover = (d.pdfPage === 1 && frontSolo) || (d.pdfPage === pdfTotal && backSolo);
+        if (isCover) {
+          slots.push({ pdfPage: d.pdfPage, half: 'full' });
+        } else if (d.width >= refWidth * 1.5) {
+          slots.push({ pdfPage: d.pdfPage, half: 'left' });
+          slots.push({ pdfPage: d.pdfPage, half: 'right' });
+        } else {
+          slots.push({ pdfPage: d.pdfPage, half: 'full' });
+        }
+      });
+      return slots;
+    });
+  }
+
+  function buildViews(logicalCount, frontSolo, backSolo, isMobile) {
     var views = [];
     if (isMobile) {
-      for (var i = 1; i <= total; i++) views.push({ type: 'solo', pages: [i] });
+      for (var i = 1; i <= logicalCount; i++) views.push({ type: 'solo', pages: [i] });
       return views;
     }
-    var start = 1, end = total;
-    if (frontSolo && total >= 1) {
+    var idx = 0;
+    if (frontSolo && logicalCount >= 1) {
       views.push({ type: 'solo-front', pages: [1] });
-      start = 2;
+      idx = 1;
     }
-    if (backSolo && total >= 2 && total !== start - 1) {
-      end = total - 1;
+    var endIdx = backSolo ? logicalCount - 1 : logicalCount;
+    while (idx < endIdx) {
+      if (idx + 1 < endIdx) {
+        views.push({ type: 'spread', pages: [idx + 1, idx + 2] });
+        idx += 2;
+      } else {
+        views.push({ type: 'solo', pages: [idx + 1] });
+        idx++;
+      }
     }
-    var p = start;
-    while (p + 1 <= end) {
-      views.push({ type: 'spread', pages: [p, p + 1] });
-      p += 2;
-    }
-    if (p === end) {
-      views.push({ type: 'solo', pages: [p] });
-    }
-    if (backSolo && total >= 2 && total !== (start - 1)) {
-      views.push({ type: 'solo-back', pages: [total] });
+    if (backSolo && logicalCount >= 2) {
+      views.push({ type: 'solo-back', pages: [logicalCount] });
     }
     return views;
   }
@@ -104,12 +134,13 @@
     var pdfjsLib = window.pdfjsLib;
     var pdf = null;
     var totalPages = 0;
+    var logicalPages = [];
     var views = [];
     var index = 0;
     var isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
     var pageCache = LRU(PAGE_CACHE);
     var thumbCache = LRU(THUMB_CACHE);
-    var inFlightRenders = new Map();
+    var pageQueues = new Map();
     var firstPageViewport = null;
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -140,12 +171,15 @@
     pdfjsLib.getDocument(source).promise.then(function (doc) {
       pdf = doc;
       totalPages = doc.numPages;
-      return doc.getPage(1).then(function (p) {
-        firstPageViewport = p.getViewport({ scale: 1 });
-        rebuild();
-        installListeners();
-        renderCurrent();
-        seedThumbnails();
+      return detectLogicalPages(doc, !!config.frontSolo, !!config.backSolo).then(function (slots) {
+        logicalPages = slots;
+        return doc.getPage(1).then(function (p) {
+          firstPageViewport = p.getViewport({ scale: 1 });
+          rebuild();
+          installListeners();
+          renderCurrent();
+          seedThumbnails();
+        });
       });
     }).catch(function (err) {
       showError(err && err.message ? err.message : 'Failed to load PDF');
@@ -179,7 +213,7 @@
     function rebuild() {
       isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
       var currentPage = views[index] ? views[index].pages[0] : 1;
-      views = buildViews(totalPages, !!config.frontSolo, !!config.backSolo, isMobile);
+      views = buildViews(logicalPages.length, !!config.frontSolo, !!config.backSolo, isMobile);
       index = 0;
       for (var i = 0; i < views.length; i++) {
         if (views[i].pages.indexOf(currentPage) !== -1) { index = i; break; }
@@ -191,11 +225,13 @@
       if (!view) return;
       spread.setAttribute('data-align', alignmentFor(view.type, isMobile));
       spread.innerHTML = '';
-      view.pages.forEach(function (pageNum) {
-        var slot = document.createElement('div');
-        slot.className = 'skeleton-' + config.slug + '__slot';
-        spread.appendChild(slot);
-        renderPage(pageNum, slot);
+      view.pages.forEach(function (logical) {
+        var slot = logicalPages[logical - 1];
+        if (!slot) return;
+        var slotEl = document.createElement('div');
+        slotEl.className = 'skeleton-' + config.slug + '__slot';
+        spread.appendChild(slotEl);
+        renderSlot(slot, slotEl);
       });
       updateIndicator();
       updateActiveThumb();
@@ -206,43 +242,69 @@
       if (!indicator) return;
       var view = views[index];
       var page = view ? view.pages[view.pages.length - 1] : 1;
-      indicator.textContent = pad(page) + ' · ' + pad(totalPages);
+      indicator.textContent = pad(page) + ' · ' + pad(logicalPages.length);
       if (thumbsToggle) {
-        thumbsToggle.textContent = 'PAGES ' + pad(page) + '·' + pad(totalPages);
+        thumbsToggle.textContent = 'PAGES ' + pad(page) + '·' + pad(logicalPages.length);
       }
     }
 
-    function renderPage(pageNum, slot) {
-      if (pageCache.has(pageNum)) {
-        var cached = pageCache.get(pageNum);
-        slot.appendChild(cached.cloneNode(true));
+    function drawSlot(src, slot, slotEl) {
+      var canvas = document.createElement('canvas');
+      if (slot.half === 'full') {
+        canvas.width = src.width;
+        canvas.height = src.height;
+        canvas.style.width = (src.width / dpr) + 'px';
+        canvas.style.height = (src.height / dpr) + 'px';
+        canvas.getContext('2d').drawImage(src, 0, 0);
+      } else {
+        var halfW = Math.floor(src.width / 2);
+        canvas.width = halfW;
+        canvas.height = src.height;
+        canvas.style.width = (halfW / dpr) + 'px';
+        canvas.style.height = (src.height / dpr) + 'px';
+        var sx = slot.half === 'left' ? 0 : src.width - halfW;
+        canvas.getContext('2d').drawImage(src, sx, 0, halfW, src.height, 0, 0, halfW, src.height);
+      }
+      slotEl.appendChild(canvas);
+    }
+
+    function queuedPageRender(pdfPage, renderFn) {
+      var prev = pageQueues.get(pdfPage) || Promise.resolve();
+      var next = prev.then(function () {
+        return pdf.getPage(pdfPage).then(renderFn);
+      });
+      pageQueues.set(pdfPage, next.catch(function () {}));
+      return next;
+    }
+
+    function renderSlot(slot, slotEl) {
+      var key = slot.pdfPage;
+      if (pageCache.has(key)) {
+        drawSlot(pageCache.get(key), slot, slotEl);
         return;
       }
-      pdf.getPage(pageNum).then(function (page) {
-        if (!stage.contains(slot)) return;
-        var slotWidth = slot.clientWidth || (stage.clientWidth / (views[index].pages.length || 1)) - 16;
+      var slotWidth = slotEl.clientWidth || (stage.clientWidth / (views[index].pages.length || 1)) - 16;
+      var multi = (slot.half === 'full') ? 1 : 2;
+      queuedPageRender(slot.pdfPage, function (page) {
+        if (pageCache.has(key)) {
+          if (stage.contains(slotEl)) {
+            slotEl.innerHTML = '';
+            drawSlot(pageCache.get(key), slot, slotEl);
+          }
+          return;
+        }
         var v1 = page.getViewport({ scale: 1 });
-        var scale = (slotWidth * dpr) / v1.width;
+        var scale = (slotWidth * multi * dpr) / v1.width;
         var viewport = page.getViewport({ scale: scale });
         var canvas = document.createElement('canvas');
         canvas.width = viewport.width;
         canvas.height = viewport.height;
-        canvas.style.width = (viewport.width / dpr) + 'px';
-        canvas.style.height = (viewport.height / dpr) + 'px';
-        var ctx = canvas.getContext('2d');
-        var task = page.render({ canvasContext: ctx, viewport: viewport });
-        inFlightRenders.set(pageNum, task);
-        task.promise.then(function () {
-          inFlightRenders.delete(pageNum);
-          pageCache.set(pageNum, canvas);
-          if (stage.contains(slot)) {
-            slot.innerHTML = '';
-            slot.appendChild(canvas.cloneNode(true));
-            var c2 = slot.querySelector('canvas');
-            c2.getContext('2d').drawImage(canvas, 0, 0);
+        return page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise.then(function () {
+          pageCache.set(key, canvas);
+          if (stage.contains(slotEl)) {
+            slotEl.innerHTML = '';
+            drawSlot(canvas, slot, slotEl);
           }
-        }).catch(function () {
-          inFlightRenders.delete(pageNum);
         });
       });
     }
@@ -252,19 +314,26 @@
       var nextView = views[index + 1];
       if (!nextView) return;
       requestIdleCallback(function () {
-        nextView.pages.forEach(function (pn) {
-          if (pageCache.has(pn)) return;
-          pdf.getPage(pn).then(function (page) {
-            var slotWidth = stage.clientWidth / 2 - 16;
+        var slotCount = nextView.pages.length;
+        var availableWidth = stage.clientWidth - 32;
+        var slotWidth = slotCount > 1 ? (availableWidth - 8) / slotCount : availableWidth;
+        nextView.pages.forEach(function (logical) {
+          var slot = logicalPages[logical - 1];
+          if (!slot) return;
+          var key = slot.pdfPage;
+          if (pageCache.has(key)) return;
+          queuedPageRender(slot.pdfPage, function (page) {
+            if (pageCache.has(key)) return;
             var v1 = page.getViewport({ scale: 1 });
-            var scale = (slotWidth * dpr) / v1.width;
+            var multi = (slot.half === 'full') ? 1 : 2;
+            var scale = (slotWidth * multi * dpr) / v1.width;
             var viewport = page.getViewport({ scale: scale });
             var canvas = document.createElement('canvas');
             canvas.width = viewport.width;
             canvas.height = viewport.height;
-            page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise.then(function () {
-              pageCache.set(pn, canvas);
-            }).catch(function () {});
+            return page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise.then(function () {
+              pageCache.set(key, canvas);
+            });
           });
         });
       });
@@ -275,7 +344,7 @@
       thumbs.innerHTML = '';
       var thumbW = 60;
       var thumbH = firstPageViewport ? Math.round(thumbW * (firstPageViewport.height / firstPageViewport.width)) : 80;
-      for (var i = 1; i <= totalPages; i++) {
+      for (var i = 1; i <= logicalPages.length; i++) {
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.setAttribute('data-page', i);
@@ -299,28 +368,40 @@
         var done = 0;
         var p = start;
         function step() {
-          if (p > totalPages || done >= 2) {
-            if (p <= totalPages) generateThumbsLazy(p);
+          if (p > logicalPages.length || done >= 2) {
+            if (p <= logicalPages.length) generateThumbsLazy(p);
             return;
           }
           if (thumbCache.has(p)) { done++; p++; step(); return; }
-          var pageNum = p;
-          pdf.getPage(pageNum).then(function (page) {
+          var logicalIdx = p;
+          var slot = logicalPages[logicalIdx - 1];
+          var btn = thumbs.querySelector('[data-page="' + logicalIdx + '"]');
+          if (!btn) { done++; p++; step(); return; }
+          var canvas = btn.querySelector('canvas');
+          queuedPageRender(slot.pdfPage, function (page) {
             var v1 = page.getViewport({ scale: 1 });
-            var scale = 60 / v1.width;
+            var multi = (slot.half === 'full') ? 1 : 2;
+            var scale = (60 * multi) / v1.width;
             var viewport = page.getViewport({ scale: scale });
-            var btn = thumbs.querySelector('[data-page="' + pageNum + '"]');
-            if (!btn) return;
-            var canvas = btn.querySelector('canvas');
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise.then(function () {
-              thumbCache.set(pageNum, true);
-              done++;
-              p++;
-              step();
-            }).catch(function () { done++; p++; step(); });
-          });
+            if (slot.half === 'full') {
+              canvas.width = viewport.width;
+              canvas.height = viewport.height;
+              return page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise.then(function () {
+                thumbCache.set(logicalIdx, true);
+              });
+            }
+            var off = document.createElement('canvas');
+            off.width = viewport.width;
+            off.height = viewport.height;
+            return page.render({ canvasContext: off.getContext('2d'), viewport: viewport }).promise.then(function () {
+              var halfW = Math.floor(off.width / 2);
+              canvas.width = halfW;
+              canvas.height = off.height;
+              var sx = slot.half === 'left' ? 0 : off.width - halfW;
+              canvas.getContext('2d').drawImage(off, sx, 0, halfW, off.height, 0, 0, halfW, off.height);
+              thumbCache.set(logicalIdx, true);
+            });
+          }).then(function () { done++; p++; step(); }, function () { done++; p++; step(); });
         }
         step();
       });
