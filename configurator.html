@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skeleton</title>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --c-bg: #FAFAF7;
+  --c-panel: #FFFFFF;
+  --c-fg: #111;
+  --c-muted: #6B6B6B;
+  --c-border: #E5E5E0;
+  --c-accent: #111;
+  --c-warn: #B47A00;
+  --c-error: #B00020;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  font-feature-settings: 'ss01', 'cv11';
+  color: var(--c-fg);
+  background: var(--c-bg);
+  line-height: 1.4;
+}
+input, button, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+#skeleton-app {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  height: 100vh;
+  min-height: 100vh;
+}
+.form {
+  padding: 24px 24px 32px;
+  overflow-y: auto;
+  border-right: 1px solid var(--c-border);
+  background: var(--c-panel);
+}
+.preview {
+  padding: 24px;
+  overflow: auto;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+.preview-frame {
+  width: 100%;
+  max-width: 1024px;
+  display: flex;
+  flex-direction: column;
+}
+.preview-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--c-border);
+  color: var(--c-muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  min-height: 480px;
+}
+
+.brand {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  margin: 0 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand .ver { color: var(--c-muted); }
+
+.field { margin-bottom: 16px; }
+.field > label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  margin-bottom: 6px;
+}
+.field input[type="text"],
+.field input[type="url"],
+.field select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--c-border);
+  background: var(--c-bg);
+  border-radius: 0;
+  outline: none;
+}
+.field input[type="text"]:focus,
+.field input[type="url"]:focus,
+.field select:focus { border-color: var(--c-fg); }
+.field .hint {
+  font-size: 12px;
+  color: var(--c-muted);
+  margin-top: 4px;
+}
+.field .err {
+  font-size: 12px;
+  color: var(--c-error);
+  margin-top: 4px;
+  display: none;
+}
+.field.invalid .err { display: block; }
+.field.invalid input { border-color: var(--c-error); }
+
+.prefixed {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--c-border);
+  background: var(--c-bg);
+}
+.prefixed .prefix {
+  padding: 8px 0 8px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--c-muted);
+  white-space: nowrap;
+  user-select: none;
+}
+.prefixed input {
+  flex: 1;
+  border: none !important;
+  padding: 8px 10px 8px 2px !important;
+  background: transparent !important;
+  outline: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.field.invalid .prefixed { border-color: var(--c-error); }
+
+.drop-zone {
+  padding: 28px 16px;
+  border: 1px dashed var(--c-border);
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 120ms, color 120ms;
+}
+.drop-zone.active, .drop-zone:hover { border-color: var(--c-fg); color: var(--c-fg); }
+.drop-zone.has-file { color: var(--c-fg); border-style: solid; }
+
+.toggle-row { display: flex; align-items: center; gap: 8px; }
+.toggle-row input[type="checkbox"] { margin: 0; }
+.toggle-row label { font-size: 14px; color: var(--c-fg); margin: 0; cursor: pointer; }
+
+.radio-row { display: flex; gap: 8px; }
+.radio-row label {
+  flex: 1;
+  text-align: center;
+  padding: 6px 0;
+  border: 1px solid var(--c-border);
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  user-select: none;
+}
+.radio-row input { display: none; }
+.radio-row input:checked + label, .radio-row label.on { color: var(--c-fg); border-color: var(--c-fg); }
+
+.actions {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--c-border);
+}
+.copy-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--c-fg);
+  color: var(--c-bg);
+  border: 1px solid var(--c-fg);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  transition: background 120ms;
+}
+.copy-btn:disabled { background: var(--c-border); color: var(--c-muted); border-color: var(--c-border); cursor: not-allowed; }
+.copy-btn.copied { background: #2A6F4A; border-color: #2A6F4A; }
+.counter {
+  margin-top: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  display: flex;
+  justify-content: space-between;
+}
+.counter.warn .count { color: var(--c-warn); }
+.counter.over .count { color: var(--c-error); }
+
+/* ======================================================== */
+/* Embed component CSS — used by .skeleton-preview locally   */
+/* The configurator generates the same CSS scoped to the     */
+/* user's slug for the clipboard snippet.                    */
+/* ======================================================== */
+.skeleton-preview {
+  --bg: #FAFAF7;
+  --fg: #111;
+  --muted: #6B6B6B;
+  --border: #E5E5E0;
+  --accent: #111;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  font-feature-settings: 'ss01', 'cv11';
+  color: var(--fg);
+  background: var(--bg);
+  box-sizing: border-box;
+}
+.skeleton-preview *, .skeleton-preview *::before, .skeleton-preview *::after { box-sizing: border-box; }
+.skeleton-preview[data-theme="dark"] {
+  --bg: #0E0E0E;
+  --fg: #EFEFE9;
+  --muted: #9A9A95;
+  --border: #1E1E1C;
+  --accent: #EFEFE9;
+}
+.skeleton-preview__chrome {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--border);
+  min-height: 44px;
+}
+.skeleton-preview__theme {
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  padding: 0;
+  color: var(--fg);
+}
+.skeleton-preview__theme::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 12px; height: 12px;
+  margin: -6px 0 0 -6px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: linear-gradient(to right, currentColor 50%, transparent 50%);
+}
+.skeleton-preview__indicator {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.skeleton-preview__thumbs-toggle {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0 14px;
+  color: var(--fg);
+  min-height: 44px;
+}
+.skeleton-preview__stage {
+  position: relative;
+  touch-action: pan-y;
+  flex: 1;
+  overflow: hidden;
+  min-height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.skeleton-preview__spread {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 200ms;
+}
+.skeleton-preview__spread[data-align="right"] { justify-content: flex-end; }
+.skeleton-preview__spread[data-align="left"] { justify-content: flex-start; }
+.skeleton-preview__spread[data-align="center"] { justify-content: center; }
+.skeleton-preview__slot { display: flex; max-height: 100%; }
+.skeleton-preview__slot canvas {
+  display: block;
+  max-height: 100%;
+  max-width: 100%;
+  filter: drop-shadow(0 4px 4px rgba(0,0,0,0.05));
+}
+.skeleton-preview__zone {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 30%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.skeleton-preview__zone--prev { left: 0; }
+.skeleton-preview__zone--next { right: 0; }
+.skeleton-preview__thumbs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.skeleton-preview__thumbs::-webkit-scrollbar { display: none; }
+.skeleton-preview__thumbs button {
+  flex-shrink: 0;
+  min-width: 44px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  scroll-snap-align: start;
+  padding: 4px 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+}
+.skeleton-preview__thumbs button canvas {
+  display: block;
+  width: 60px;
+  height: 80px;
+  background: var(--border);
+}
+.skeleton-preview__thumbs button[data-active="true"] canvas { outline: 1px solid var(--accent); }
+.skeleton-preview__thumbs button[data-active="true"] { color: var(--fg); }
+.skeleton-preview__thumbs button span {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+@media (max-width: 768px) {
+  .skeleton-preview__thumbs { display: none; max-height: 96px; }
+  .skeleton-preview__thumbs[data-open="true"] { display: flex; }
+  .skeleton-preview__spread { justify-content: center !important; }
+  .skeleton-preview__stage { min-height: 360px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-preview__spread { transition: none; }
+}
+
+@media (max-width: 900px) {
+  #skeleton-app { grid-template-columns: 1fr; }
+  .form { border-right: none; border-bottom: 1px solid var(--c-border); max-height: 50vh; }
+}
+</style>
+</head>
+<body>
+<main id="skeleton-app">
+  <section class="form">
+    <div class="brand">
+      <span>SKELETON</span><span class="ver" id="verLabel"></span>
+    </div>
+
+    <div class="field" id="dropField">
+      <label>PDF file (for preview)</label>
+      <div class="drop-zone" id="dropZone">Drop PDF or click to choose</div>
+      <div class="hint">Local preview only. The snippet uses the URL below.</div>
+    </div>
+
+    <div class="field" id="urlField">
+      <label>PDF path on byoung.co</label>
+      <div class="prefixed">
+        <span class="prefix">https://www.byoung.co/</span>
+        <input type="text" id="pdfUrl" placeholder="book.pdf" autocomplete="off">
+      </div>
+      <div class="hint" id="urlPreview"></div>
+      <div class="err">Path must end in .pdf</div>
+    </div>
+
+    <div class="field" id="slugField">
+      <label>Slug</label>
+      <input type="text" id="slug" placeholder="sc26" autocomplete="off">
+      <div class="hint">Used to scope the embed CSS. Lowercase, hyphens.</div>
+      <div class="err">Slug must be lowercase letters, digits, hyphens. 2-40 chars.</div>
+    </div>
+
+    <div class="field toggle-row">
+      <input type="checkbox" id="frontSolo" checked>
+      <label for="frontSolo">Front cover is solo</label>
+    </div>
+
+    <div class="field toggle-row">
+      <input type="checkbox" id="backSolo" checked>
+      <label for="backSolo">Back cover is solo</label>
+    </div>
+
+    <div class="field">
+      <label>Theme</label>
+      <div class="radio-row">
+        <input type="radio" name="theme" value="auto" id="themeAuto" checked>
+        <label for="themeAuto">Auto</label>
+        <input type="radio" name="theme" value="light" id="themeLight">
+        <label for="themeLight">Light</label>
+        <input type="radio" name="theme" value="dark" id="themeDark">
+        <label for="themeDark">Dark</label>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="copyBtn" type="button" class="copy-btn" disabled>Copy snippet</button>
+      <div class="counter" id="counter"><span>chars</span><span class="count" id="counterText">0 / 10,000</span></div>
+    </div>
+  </section>
+
+  <section class="preview">
+    <div class="preview-frame" id="previewFrame">
+      <div class="preview-empty">Drop a PDF or paste a URL</div>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="./preview-engine.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var GH_USER = 'bendalis';
+  var GH_TAG = 'v1.0.0';
+  var BASE_URL = 'https://www.byoung.co/';
+  document.getElementById('verLabel').textContent = GH_TAG;
+
+  function toUrl(path) {
+    if (!path) return '';
+    if (/^https?:\/\//i.test(path)) return path;
+    return BASE_URL + path.replace(/^\/+/, '');
+  }
+
+  // ============================================================
+  // Embed CSS template — generates the same CSS scoped to {slug}
+  // Kept in sync with the .skeleton-preview block above.
+  // ============================================================
+  function embedCss(slug) {
+    var s = '.skeleton-' + slug;
+    return [
+      s + '{--bg:#FAFAF7;--fg:#111;--muted:#6B6B6B;--border:#E5E5E0;--accent:#111;display:flex;flex-direction:column;width:100%;font-family:"Inter",system-ui,sans-serif;font-size:14px;letter-spacing:-0.01em;font-feature-settings:"ss01","cv11";color:var(--fg);background:var(--bg);box-sizing:border-box}',
+      s + ' *,' + s + ' *::before,' + s + ' *::after{box-sizing:border-box}',
+      s + '[data-theme="dark"]{--bg:#0E0E0E;--fg:#EFEFE9;--muted:#9A9A95;--border:#1E1E1C;--accent:#EFEFE9}',
+      s + '__chrome{display:flex;justify-content:space-between;align-items:center;padding:4px 12px;border-bottom:1px solid var(--border);min-height:44px}',
+      s + '__theme{width:44px;height:44px;background:transparent;border:none;cursor:pointer;position:relative;padding:0;color:var(--fg)}',
+      s + '__theme::before{content:"";position:absolute;top:50%;left:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border:1px solid currentColor;border-radius:50%;background:linear-gradient(to right,currentColor 50%,transparent 50%)}',
+      s + '__indicator{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)}',
+      s + '__thumbs-toggle{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;background:transparent;border:none;cursor:pointer;padding:0 14px;color:var(--fg);min-height:44px}',
+      s + '__stage{position:relative;touch-action:pan-y;flex:1;overflow:hidden;min-height:480px;display:flex;align-items:center;justify-content:center;padding:16px}',
+      s + '__spread{display:flex;height:100%;width:100%;align-items:center;justify-content:center;gap:8px;transition:opacity 200ms}',
+      s + '__spread[data-align="right"]{justify-content:flex-end}',
+      s + '__spread[data-align="left"]{justify-content:flex-start}',
+      s + '__spread[data-align="center"]{justify-content:center}',
+      s + '__slot{display:flex;max-height:100%}',
+      s + '__slot canvas{display:block;max-height:100%;max-width:100%;filter:drop-shadow(0 4px 4px rgba(0,0,0,0.05))}',
+      s + '__zone{position:absolute;top:0;height:100%;width:30%;background:transparent;border:none;cursor:pointer;padding:0}',
+      s + '__zone--prev{left:0}',
+      s + '__zone--next{right:0}',
+      s + '__thumbs{display:flex;gap:4px;overflow-x:auto;scroll-snap-type:x mandatory;padding:8px 12px;border-top:1px solid var(--border);-webkit-overflow-scrolling:touch;scrollbar-width:none}',
+      s + '__thumbs::-webkit-scrollbar{display:none}',
+      s + '__thumbs button{flex-shrink:0;min-width:44px;background:transparent;border:none;cursor:pointer;scroll-snap-align:start;padding:4px 2px;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted)}',
+      s + '__thumbs button canvas{display:block;width:60px;height:80px;background:var(--border)}',
+      s + '__thumbs button[data-active="true"] canvas{outline:1px solid var(--accent)}',
+      s + '__thumbs button[data-active="true"]{color:var(--fg)}',
+      s + '__thumbs button span{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em}',
+      '@media (max-width:768px){',
+      s + '__thumbs{display:none;max-height:96px}',
+      s + '__thumbs[data-open="true"]{display:flex}',
+      s + '__spread{justify-content:center !important}',
+      s + '__stage{min-height:360px}',
+      '}',
+      '@media (prefers-reduced-motion:reduce){',
+      s + '__spread{transition:none}',
+      '}'
+    ].join('');
+  }
+
+  // ============================================================
+  // Embed snippet template (for clipboard)
+  // ============================================================
+  function buildSnippet(state) {
+    var slug = state.slug;
+    var css = embedCss(slug);
+    var s = slug;
+    return (
+      '<div class="skeleton skeleton-' + s + '" data-pdf="' + attrEsc(state.pdfUrl) + '" data-slug="' + s + '" data-front-solo="' + state.frontSolo + '" data-back-solo="' + state.backSolo + '" data-theme="' + state.theme + '">\n' +
+      '  <header class="skeleton-' + s + '__chrome">\n' +
+      '    <button class="skeleton-' + s + '__theme" type="button" aria-label="Toggle theme"></button>\n' +
+      '    <span class="skeleton-' + s + '__indicator">01 · 01</span>\n' +
+      '    <button class="skeleton-' + s + '__thumbs-toggle" type="button" aria-expanded="false">PAGES</button>\n' +
+      '  </header>\n' +
+      '  <div class="skeleton-' + s + '__stage" role="region">\n' +
+      '    <div class="skeleton-' + s + '__spread"></div>\n' +
+      '    <button class="skeleton-' + s + '__zone skeleton-' + s + '__zone--prev" type="button" aria-label="Previous"></button>\n' +
+      '    <button class="skeleton-' + s + '__zone skeleton-' + s + '__zone--next" type="button" aria-label="Next"></button>\n' +
+      '  </div>\n' +
+      '  <nav class="skeleton-' + s + '__thumbs" aria-label="Pages"></nav>\n' +
+      '</div>\n' +
+      '<style>' + css + '</style>\n' +
+      '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap">\n' +
+      '<script>window.__SKELETON__=(window.__SKELETON__||{});window.__SKELETON__["' + s + '"]={pdfUrl:"' + jsEsc(state.pdfUrl) + '",slug:"' + s + '",frontSolo:' + state.frontSolo + ',backSolo:' + state.backSolo + ',theme:"' + state.theme + '"};<\/script>\n' +
+      '<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer><\/script>\n' +
+      '<script src="https://cdn.jsdelivr.net/gh/' + GH_USER + '/skeleton@' + GH_TAG + '/preview-engine.js" defer><\/script>'
+    );
+  }
+
+  // ============================================================
+  // Helpers
+  // ============================================================
+  function attrEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function jsEsc(s) {
+    return String(s == null ? '' : s).replace(/[\\'"\r\n\u2028\u2029<]/g, function (c) {
+      return { '\\': '\\\\', "'": "\\'", '"': '\\"', '\r': '\\r', '\n': '\\n', '\u2028': '\\u2028', '\u2029': '\\u2029', '<': '\\u003c' }[c];
+    });
+  }
+  function slugify(name) {
+    return String(name || '')
+      .toLowerCase()
+      .replace(/\.[^.]+$/, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40);
+  }
+  // ============================================================
+  // State + DOM refs
+  // ============================================================
+  var state = {
+    pdfData: null,
+    pdfUrl: '',
+    slug: '',
+    frontSolo: true,
+    backSolo: true,
+    theme: 'auto'
+  };
+
+  var dropZone = document.getElementById('dropZone');
+  var pdfUrlInput = document.getElementById('pdfUrl');
+  var slugInput = document.getElementById('slug');
+  var slugField = document.getElementById('slugField');
+  var urlField = document.getElementById('urlField');
+  var frontSoloInput = document.getElementById('frontSolo');
+  var backSoloInput = document.getElementById('backSolo');
+  var themeRadios = document.querySelectorAll('input[name="theme"]');
+  var copyBtn = document.getElementById('copyBtn');
+  var counter = document.getElementById('counter');
+  var counterText = document.getElementById('counterText');
+  var previewFrame = document.getElementById('previewFrame');
+
+  // Drop zone
+  dropZone.addEventListener('dragover', function (e) { e.preventDefault(); dropZone.classList.add('active'); });
+  dropZone.addEventListener('dragleave', function () { dropZone.classList.remove('active'); });
+  dropZone.addEventListener('drop', function (e) {
+    e.preventDefault();
+    dropZone.classList.remove('active');
+    var file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (!file) return;
+    if (!/\.pdf$/i.test(file.name)) return;
+    loadFile(file);
+  });
+  dropZone.addEventListener('click', function () {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/pdf,.pdf';
+    input.addEventListener('change', function () {
+      if (input.files && input.files[0]) loadFile(input.files[0]);
+    });
+    input.click();
+  });
+
+  function loadFile(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      state.pdfData = reader.result;
+      dropZone.textContent = file.name;
+      dropZone.classList.add('has-file');
+      if (!slugInput.dataset.touched) {
+        var auto = slugify(file.name);
+        state.slug = auto;
+        slugInput.value = auto;
+      }
+      validateAll();
+      schedulePreview();
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  // Input bindings
+  pdfUrlInput.addEventListener('input', function () {
+    var raw = pdfUrlInput.value.trim();
+    if (/^https?:\/\/(www\.)?byoung\.co\//i.test(raw)) {
+      raw = raw.replace(/^https?:\/\/(www\.)?byoung\.co\//i, '');
+      pdfUrlInput.value = raw;
+    }
+    state.pdfUrl = toUrl(raw);
+    updateUrlPreview();
+    if (!slugInput.dataset.touched) {
+      var auto = slugify((raw.split('/').pop() || ''));
+      if (auto) { state.slug = auto; slugInput.value = auto; }
+    }
+    validateAll();
+    schedulePreview();
+  });
+  function updateUrlPreview() {
+    var hint = document.getElementById('urlPreview');
+    if (!hint) return;
+    hint.textContent = state.pdfUrl || '';
+  }
+  slugInput.addEventListener('input', function () {
+    slugInput.dataset.touched = '1';
+    state.slug = slugInput.value.trim();
+    validateAll();
+    schedulePreview();
+  });
+  frontSoloInput.addEventListener('change', function () { state.frontSolo = frontSoloInput.checked; updateCounter(); schedulePreview(); });
+  backSoloInput.addEventListener('change', function () { state.backSolo = backSoloInput.checked; updateCounter(); schedulePreview(); });
+  themeRadios.forEach(function (r) {
+    r.addEventListener('change', function () { if (r.checked) { state.theme = r.value; updateCounter(); schedulePreview(); } });
+  });
+
+  // Validation
+  function validUrl(u) { return /^https?:\/\/[^\s]+\.pdf(\?.*)?$/i.test(u); }
+  function validPath(p) { return /[^\s]+\.pdf(\?.*)?$/i.test(p) && !/\s/.test(p); }
+  function validSlug(s) { return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s) && s.length >= 2 && s.length <= 40; }
+
+  function validateAll() {
+    var slugOk = validSlug(state.slug);
+    var urlOk = state.pdfUrl ? validUrl(state.pdfUrl) : false;
+    slugField.classList.toggle('invalid', state.slug !== '' && !slugOk);
+    urlField.classList.toggle('invalid', state.pdfUrl !== '' && !urlOk);
+    copyBtn.disabled = !(slugOk && urlOk);
+    updateCounter();
+  }
+
+  function updateCounter() {
+    if (!state.slug) {
+      counterText.textContent = '0 / 10,000';
+      counter.classList.remove('warn', 'over');
+      return;
+    }
+    var snippet;
+    try { snippet = buildSnippet(state); } catch (e) { snippet = ''; }
+    var len = snippet.length;
+    counterText.textContent = len.toLocaleString() + ' / 10,000';
+    counter.classList.toggle('warn', len > 9000 && len <= 10000);
+    counter.classList.toggle('over', len > 10000);
+    if (len > 10000) copyBtn.disabled = true;
+  }
+
+  // Preview
+  var previewTimer = null;
+  function schedulePreview() {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(renderPreview, 200);
+  }
+
+  function renderPreview() {
+    if (!state.pdfData && !state.pdfUrl) {
+      previewFrame.innerHTML = '<div class="preview-empty">Drop a PDF or paste a URL</div>';
+      return;
+    }
+    if (state.pdfUrl && !validUrl(state.pdfUrl) && !state.pdfData) {
+      previewFrame.innerHTML = '<div class="preview-empty">Waiting for valid PDF</div>';
+      return;
+    }
+    var slug = 'preview';
+    window.__SKELETON__ = window.__SKELETON__ || {};
+    window.__SKELETON__[slug] = {
+      pdfUrl: state.pdfUrl,
+      pdfData: state.pdfData,
+      slug: slug,
+      frontSolo: state.frontSolo,
+      backSolo: state.backSolo,
+      theme: state.theme
+    };
+    var root = document.createElement('div');
+    root.className = 'skeleton skeleton-' + slug;
+    root.setAttribute('data-slug', slug);
+    root.setAttribute('data-front-solo', state.frontSolo);
+    root.setAttribute('data-back-solo', state.backSolo);
+    root.setAttribute('data-theme', state.theme);
+    root.innerHTML =
+      '<header class="skeleton-' + slug + '__chrome">' +
+      '  <button class="skeleton-' + slug + '__theme" type="button" aria-label="Toggle theme"></button>' +
+      '  <span class="skeleton-' + slug + '__indicator">01 · 01</span>' +
+      '  <button class="skeleton-' + slug + '__thumbs-toggle" type="button" aria-expanded="false">PAGES</button>' +
+      '</header>' +
+      '<div class="skeleton-' + slug + '__stage" role="region">' +
+      '  <div class="skeleton-' + slug + '__spread"></div>' +
+      '  <button class="skeleton-' + slug + '__zone skeleton-' + slug + '__zone--prev" type="button" aria-label="Previous"></button>' +
+      '  <button class="skeleton-' + slug + '__zone skeleton-' + slug + '__zone--next" type="button" aria-label="Next"></button>' +
+      '</div>' +
+      '<nav class="skeleton-' + slug + '__thumbs" aria-label="Pages"></nav>';
+    previewFrame.innerHTML = '';
+    previewFrame.appendChild(root);
+    if (window.__skeletonReboot) window.__skeletonReboot(slug);
+  }
+
+  // Copy
+  copyBtn.addEventListener('click', function () {
+    var text = buildSnippet(state);
+    var done = function () {
+      copyBtn.textContent = 'Copied';
+      copyBtn.classList.add('copied');
+      setTimeout(function () {
+        copyBtn.textContent = 'Copy snippet';
+        copyBtn.classList.remove('copied');
+      }, 1200);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else {
+      fallback();
+    }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      done();
+    }
+  });
+
+  validateAll();
+  updateCounter();
+})();
+</script>
+</body>
+</html>
