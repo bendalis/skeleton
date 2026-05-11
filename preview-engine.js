@@ -256,7 +256,7 @@
       var page = view ? view.pages[view.pages.length - 1] : 1;
       indicator.textContent = pad(page) + ' · ' + pad(logicalPages.length);
       if (thumbsToggle) {
-        thumbsToggle.textContent = 'PAGES ' + pad(page) + '·' + pad(logicalPages.length);
+        thumbsToggle.textContent = 'PAGES';
       }
     }
 
