@@ -176,6 +176,8 @@
       var styleEl = document.createElement('style');
       styleEl.id = id;
       styleEl.textContent =
+        s + '__slot{flex:1;display:flex;align-items:center;justify-content:center;max-height:100%;min-width:0;min-height:0}' +
+        s + '__slot canvas{display:block;max-width:100%;max-height:100%;width:auto;height:auto}' +
         '@media (min-width:769px){' +
         s + '{height:100vh;max-height:100vh;overflow:hidden}' +
         s + '__thumbs-toggle{visibility:hidden;pointer-events:none}' +
@@ -266,21 +268,17 @@
 
     function drawSlot(src, slot, slotEl) {
       var canvas = document.createElement('canvas');
+      var w, h, sx;
       if (slot.half === 'full') {
-        canvas.width = src.width;
-        canvas.height = src.height;
-        canvas.style.width = (src.width / dpr) + 'px';
-        canvas.style.height = (src.height / dpr) + 'px';
-        canvas.getContext('2d').drawImage(src, 0, 0);
+        w = src.width; h = src.height; sx = 0;
       } else {
-        var halfW = Math.floor(src.width / 2);
-        canvas.width = halfW;
-        canvas.height = src.height;
-        canvas.style.width = (halfW / dpr) + 'px';
-        canvas.style.height = (src.height / dpr) + 'px';
-        var sx = slot.half === 'left' ? 0 : src.width - halfW;
-        canvas.getContext('2d').drawImage(src, sx, 0, halfW, src.height, 0, 0, halfW, src.height);
+        w = Math.floor(src.width / 2);
+        h = src.height;
+        sx = slot.half === 'left' ? 0 : src.width - w;
       }
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(src, sx, 0, w, h, 0, 0, w, h);
       slotEl.appendChild(canvas);
     }
 
