@@ -168,9 +168,36 @@
     var details = root.querySelector('.skeleton-' + config.slug + '__details');
     var tabPages = root.querySelector('.skeleton-' + config.slug + '__tab--pages');
     var tabDetails = root.querySelector('.skeleton-' + config.slug + '__tab--details');
+    upgradeMarkup();
     injectRuntimeCss();
     applyTheme();
     initTabs();
+
+    function upgradeMarkup() {
+      var sl = config.slug;
+      var chrome = root.querySelector('.skeleton-' + sl + '__chrome');
+      if (chrome && (!tabPages || !tabDetails)) {
+        var tabs = document.createElement('div');
+        tabs.className = 'skeleton-' + sl + '__tabs';
+        tabs.innerHTML =
+          '<button class="skeleton-' + sl + '__tab skeleton-' + sl + '__tab--pages" type="button" role="tab" aria-selected="true">Pages</button>' +
+          '<button class="skeleton-' + sl + '__tab skeleton-' + sl + '__tab--details" type="button" role="tab" aria-selected="false">Details</button>';
+        var themeEl = chrome.querySelector('.skeleton-' + sl + '__theme');
+        if (themeEl && themeEl.nextSibling) chrome.insertBefore(tabs, themeEl.nextSibling);
+        else if (themeEl) chrome.appendChild(tabs);
+        else chrome.insertBefore(tabs, chrome.firstChild);
+        tabPages = tabs.querySelector('.skeleton-' + sl + '__tab--pages');
+        tabDetails = tabs.querySelector('.skeleton-' + sl + '__tab--details');
+      }
+      if (!details) {
+        var d = document.createElement('section');
+        d.className = 'skeleton-' + sl + '__details';
+        d.setAttribute('role', 'tabpanel');
+        root.appendChild(d);
+        details = d;
+      }
+      if (!root.getAttribute('data-tab')) root.setAttribute('data-tab', 'pages');
+    }
 
     function detailsHasContent() {
       if (!details) return false;
