@@ -197,6 +197,16 @@
         details = d;
       }
       if (!root.getAttribute('data-tab')) root.setAttribute('data-tab', 'pages');
+      var detailsUrl = config.detailsUrl || (details && details.getAttribute('data-url'));
+      if (detailsUrl && !details.textContent.trim()) {
+        fetch(detailsUrl).then(function (r) {
+          if (!r.ok) throw new Error('details fetch ' + r.status);
+          return r.text();
+        }).then(function (html) {
+          details.innerHTML = html;
+          if (typeof initTabs === 'function') initTabs();
+        }).catch(function () { /* silent */ });
+      }
     }
 
     function detailsHasContent() {
