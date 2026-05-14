@@ -82,7 +82,7 @@ The clipboard snippet:
 | Fonts (Inter, JetBrains Mono) | No, loaded from Google Fonts |
 | Runtime (preview-engine.js) | No, loaded from jsDelivr at a pinned tag |
 
-Webflow's HTML Embed component is limited to 10,000 characters. The configurator shows a live count and disables Copy if you go over.
+Webflow's HTML Embed component is limited to 50,000 characters. The configurator shows a live count and disables Copy if you go over.
 
 ## Constraints worth knowing
 

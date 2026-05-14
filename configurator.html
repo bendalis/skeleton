@@ -571,7 +571,7 @@ button { cursor: pointer; }
 
     <div class="actions">
       <button id="copyBtn" type="button" class="copy-btn" disabled>Copy snippet</button>
-      <div class="counter" id="counter"><span>chars</span><span class="count" id="counterText">0 / 10,000</span></div>
+      <div class="counter" id="counter"><span>chars</span><span class="count" id="counterText">0 / 50,000</span></div>
     </div>
   </section>
 
@@ -931,17 +931,17 @@ button { cursor: pointer; }
 
   function updateCounter() {
     if (!state.slug) {
-      counterText.textContent = '0 / 10,000';
+      counterText.textContent = '0 / 50,000';
       counter.classList.remove('warn', 'over');
       return;
     }
     var snippet;
     try { snippet = buildSnippet(state); } catch (e) { snippet = ''; }
     var len = snippet.length;
-    counterText.textContent = len.toLocaleString() + ' / 10,000';
-    counter.classList.toggle('warn', len > 9000 && len <= 10000);
-    counter.classList.toggle('over', len > 10000);
-    if (len > 10000) copyBtn.disabled = true;
+    counterText.textContent = len.toLocaleString() + ' / 50,000';
+    counter.classList.toggle('warn', len > 45000 && len <= 50000);
+    counter.classList.toggle('over', len > 50000);
+    if (len > 50000) copyBtn.disabled = true;
   }
 
   // Preview
