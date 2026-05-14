@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
 <style>
 :root {
   --c-bg: #FAFAF7;
@@ -182,6 +183,14 @@ button { cursor: pointer; }
 }
 .radio-row input { display: none; }
 .radio-row input:checked + label, .radio-row label.on { color: var(--c-fg); border-color: var(--c-fg); }
+
+.details-mount {
+  border: 1px solid var(--c-border);
+  background: var(--c-bg);
+}
+.details-mount .ql-toolbar { border: none; border-bottom: 1px solid var(--c-border); background: var(--c-panel); }
+.details-mount .ql-container { border: none; min-height: 140px; font-family: inherit; font-size: 14px; }
+.details-mount .ql-editor { padding: 12px; }
 
 .actions {
   margin-top: 24px;
@@ -393,6 +402,49 @@ button { cursor: pointer; }
   font-size: 10px;
   letter-spacing: 0.08em;
 }
+.skeleton-preview__tabs { display: flex; gap: 0; align-items: stretch; }
+.skeleton-preview__tab {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 14px 10px;
+  color: var(--muted);
+  min-height: 44px;
+  border-bottom: 1px solid transparent;
+  margin-bottom: -1px;
+}
+.skeleton-preview__tab[aria-selected="true"] { color: var(--fg); border-bottom-color: currentColor; }
+.skeleton-preview__details {
+  display: none;
+  padding: 24px 16px;
+  max-width: 720px;
+  margin: 0 auto;
+  line-height: 1.6;
+  color: var(--fg);
+  overflow: auto;
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+}
+.skeleton-preview[data-tab="details"] .skeleton-preview__details { display: block; }
+.skeleton-preview[data-tab="details"] .skeleton-preview__stage { display: none; }
+.skeleton-preview[data-tab="details"] .skeleton-preview__thumbs { display: none; }
+.skeleton-preview[data-tab="details"] .skeleton-preview__indicator { visibility: hidden; }
+.skeleton-preview__details h2 { font-size: 18px; font-weight: 500; margin: 24px 0 8px; }
+.skeleton-preview__details h2:first-child { margin-top: 0; }
+.skeleton-preview__details h3 { font-size: 16px; font-weight: 500; margin: 20px 0 6px; }
+.skeleton-preview__details h4 { font-size: 14px; font-weight: 500; margin: 16px 0 4px; }
+.skeleton-preview__details p { margin: 0 0 12px; }
+.skeleton-preview__details ul, .skeleton-preview__details ol { margin: 0 0 12px; padding-left: 20px; }
+.skeleton-preview__details li { margin-bottom: 4px; }
+.skeleton-preview__details a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.skeleton-preview__details blockquote { margin: 12px 0; padding-left: 12px; border-left: 1px solid var(--border); color: var(--muted); }
+.skeleton-preview__details code { font-family: 'JetBrains Mono', monospace; font-size: 0.9em; background: var(--border); padding: 1px 4px; border-radius: 2px; }
+.skeleton-preview__details hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 @media (max-width: 768px) {
   .skeleton-preview__thumbs { display: none; max-height: 96px; }
   .skeleton-preview__thumbs[data-open="true"] { display: flex; }
@@ -461,6 +513,12 @@ button { cursor: pointer; }
       </div>
     </div>
 
+    <div class="field">
+      <label>Project details (optional)</label>
+      <div class="details-mount"><div id="detailsEditor"></div></div>
+      <div class="hint">Todos, costs, dimensions, spec notes. Appears under a DETAILS tab in the embed.</div>
+    </div>
+
     <div class="actions">
       <button id="copyBtn" type="button" class="copy-btn" disabled>Copy snippet</button>
       <div class="counter" id="counter"><span>chars</span><span class="count" id="counterText">0 / 10,000</span></div>
@@ -476,6 +534,7 @@ button { cursor: pointer; }
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="./preview-engine.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 <script>
 (function () {
   'use strict';
@@ -523,6 +582,25 @@ button { cursor: pointer; }
       s + '__thumbs button[data-active="true"] canvas{outline:1px solid var(--accent)}',
       s + '__thumbs button[data-active="true"]{color:var(--fg)}',
       s + '__thumbs button span{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em}',
+      s + '__tabs{display:flex;gap:0;align-items:stretch}',
+      s + '__tab{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;background:transparent;border:none;cursor:pointer;padding:14px 10px;color:var(--muted);min-height:44px;border-bottom:1px solid transparent;margin-bottom:-1px}',
+      s + '__tab[aria-selected="true"]{color:var(--fg);border-bottom-color:currentColor}',
+      s + '__details{display:none;padding:24px 16px;max-width:720px;margin:0 auto;line-height:1.6;color:var(--fg);overflow:auto;flex:1;width:100%;box-sizing:border-box}',
+      s + '[data-tab="details"] ' + s + '__details{display:block}',
+      s + '[data-tab="details"] ' + s + '__stage{display:none}',
+      s + '[data-tab="details"] ' + s + '__thumbs{display:none}',
+      s + '[data-tab="details"] ' + s + '__indicator{visibility:hidden}',
+      s + '__details h2{font-size:18px;font-weight:500;margin:24px 0 8px}',
+      s + '__details h2:first-child{margin-top:0}',
+      s + '__details h3{font-size:16px;font-weight:500;margin:20px 0 6px}',
+      s + '__details h4{font-size:14px;font-weight:500;margin:16px 0 4px}',
+      s + '__details p{margin:0 0 12px}',
+      s + '__details ul,' + s + '__details ol{margin:0 0 12px;padding-left:20px}',
+      s + '__details li{margin-bottom:4px}',
+      s + '__details a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}',
+      s + '__details blockquote{margin:12px 0;padding-left:12px;border-left:1px solid var(--border);color:var(--muted)}',
+      s + '__details code{font-family:"JetBrains Mono",monospace;font-size:0.9em;background:var(--border);padding:1px 4px;border-radius:2px}',
+      s + '__details hr{border:none;border-top:1px solid var(--border);margin:24px 0}',
       '@media (min-width:769px){',
       s + '{height:100vh;max-height:100vh;overflow:hidden}',
       s + '__thumbs-toggle{visibility:hidden;pointer-events:none}',
@@ -546,10 +624,15 @@ button { cursor: pointer; }
     var slug = state.slug;
     var css = embedCss(slug);
     var s = slug;
+    var detailsHtml = sanitizeDetails(state.detailsHtml || '');
     return (
-      '<div class="skeleton skeleton-' + s + '" data-pdf="' + attrEsc(state.pdfUrl) + '" data-slug="' + s + '" data-front-solo="' + state.frontSolo + '" data-back-solo="' + state.backSolo + '" data-theme="' + state.theme + '">\n' +
+      '<div class="skeleton skeleton-' + s + '" data-pdf="' + attrEsc(state.pdfUrl) + '" data-slug="' + s + '" data-front-solo="' + state.frontSolo + '" data-back-solo="' + state.backSolo + '" data-theme="' + state.theme + '" data-tab="pages">\n' +
       '  <header class="skeleton-' + s + '__chrome">\n' +
       '    <button class="skeleton-' + s + '__theme" type="button" aria-label="Toggle theme"></button>\n' +
+      '    <div class="skeleton-' + s + '__tabs">\n' +
+      '      <button class="skeleton-' + s + '__tab skeleton-' + s + '__tab--pages" type="button" role="tab" aria-selected="true">Pages</button>\n' +
+      '      <button class="skeleton-' + s + '__tab skeleton-' + s + '__tab--details" type="button" role="tab" aria-selected="false">Details</button>\n' +
+      '    </div>\n' +
       '    <span class="skeleton-' + s + '__indicator">01 · 01</span>\n' +
       '    <button class="skeleton-' + s + '__thumbs-toggle" type="button" aria-expanded="false">PAGES</button>\n' +
       '  </header>\n' +
@@ -559,6 +642,7 @@ button { cursor: pointer; }
       '    <button class="skeleton-' + s + '__zone skeleton-' + s + '__zone--next" type="button" aria-label="Next"></button>\n' +
       '  </div>\n' +
       '  <nav class="skeleton-' + s + '__thumbs" aria-label="Pages"></nav>\n' +
+      '  <section class="skeleton-' + s + '__details" role="tabpanel">' + detailsHtml + '</section>\n' +
       '</div>\n' +
       '<style>' + css + '</style>\n' +
       '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap">\n' +
@@ -589,6 +673,63 @@ button { cursor: pointer; }
       .replace(/^-+|-+$/g, '')
       .slice(0, 40);
   }
+  function sanitizeDetails(html) {
+    if (!html) return '';
+    var allowed = {
+      P: [], STRONG: [], EM: [], B: [], I: [], BR: [], HR: [],
+      H2: [], H3: [], H4: [], UL: [], OL: [], LI: [],
+      BLOCKQUOTE: [], CODE: [], PRE: [], A: ['href']
+    };
+    var doc = new DOMParser().parseFromString('<div>' + html + '</div>', 'text/html');
+    var root = doc.body.firstChild;
+    walk(root);
+    function walk(node) {
+      var kids = Array.prototype.slice.call(node.childNodes);
+      kids.forEach(function (child) {
+        if (child.nodeType === 3) return;
+        if (child.nodeType !== 1) { child.parentNode.removeChild(child); return; }
+        var tag = child.tagName;
+        var allowedAttrs = allowed[tag];
+        if (!allowedAttrs) {
+          while (child.firstChild) child.parentNode.insertBefore(child.firstChild, child);
+          child.parentNode.removeChild(child);
+          return;
+        }
+        Array.prototype.slice.call(child.attributes).forEach(function (a) {
+          if (allowedAttrs.indexOf(a.name) === -1) child.removeAttribute(a.name);
+        });
+        if (tag === 'A') {
+          var href = child.getAttribute('href') || '';
+          if (!/^(https?:|mailto:)/i.test(href)) {
+            while (child.firstChild) child.parentNode.insertBefore(child.firstChild, child);
+            child.parentNode.removeChild(child);
+            return;
+          }
+          child.setAttribute('rel', 'noopener noreferrer');
+          child.setAttribute('target', '_blank');
+        }
+        if (tag === 'B') { renameTag(child, 'strong'); }
+        else if (tag === 'I') { renameTag(child, 'em'); }
+        else { walk(child); }
+      });
+    }
+    function renameTag(el, name) {
+      var next = doc.createElement(name);
+      while (el.firstChild) next.appendChild(el.firstChild);
+      Array.prototype.slice.call(el.attributes).forEach(function (a) { next.setAttribute(a.name, a.value); });
+      el.parentNode.replaceChild(next, el);
+      walk(next);
+    }
+    return root.innerHTML.replace(/\s+/g, ' ').trim();
+  }
+  function hasMeaningfulDetails(html) {
+    if (!html) return false;
+    var clean = sanitizeDetails(html);
+    if (!clean) return false;
+    var div = document.createElement('div');
+    div.innerHTML = clean;
+    return !!div.textContent.trim();
+  }
   // ============================================================
   // State + DOM refs
   // ============================================================
@@ -598,7 +739,8 @@ button { cursor: pointer; }
     slug: '',
     frontSolo: true,
     backSolo: true,
-    theme: 'auto'
+    theme: 'auto',
+    detailsHtml: ''
   };
 
   var dropZone = document.getElementById('dropZone');
@@ -613,6 +755,27 @@ button { cursor: pointer; }
   var counter = document.getElementById('counter');
   var counterText = document.getElementById('counterText');
   var previewFrame = document.getElementById('previewFrame');
+
+  // Quill for project details
+  var detailsQuill = new Quill('#detailsEditor', {
+    theme: 'snow',
+    placeholder: 'Todos, costs, dimensions, spec notes...',
+    modules: {
+      toolbar: [
+        [{ header: [2, 3, 4, false] }],
+        ['bold', 'italic', 'link'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['blockquote', 'code'],
+        ['clean']
+      ]
+    },
+    formats: ['header', 'bold', 'italic', 'link', 'list', 'blockquote', 'code']
+  });
+  detailsQuill.on('text-change', function () {
+    state.detailsHtml = detailsQuill.root.innerHTML;
+    updateCounter();
+    schedulePreview();
+  });
 
   // Drop zone
   dropZone.addEventListener('dragover', function (e) { e.preventDefault(); dropZone.classList.add('active'); });
@@ -746,9 +909,14 @@ button { cursor: pointer; }
     root.setAttribute('data-front-solo', state.frontSolo);
     root.setAttribute('data-back-solo', state.backSolo);
     root.setAttribute('data-theme', state.theme);
+    root.setAttribute('data-tab', 'pages');
     root.innerHTML =
       '<header class="skeleton-' + slug + '__chrome">' +
       '  <button class="skeleton-' + slug + '__theme" type="button" aria-label="Toggle theme"></button>' +
+      '  <div class="skeleton-' + slug + '__tabs">' +
+      '    <button class="skeleton-' + slug + '__tab skeleton-' + slug + '__tab--pages" type="button" role="tab" aria-selected="true">Pages</button>' +
+      '    <button class="skeleton-' + slug + '__tab skeleton-' + slug + '__tab--details" type="button" role="tab" aria-selected="false">Details</button>' +
+      '  </div>' +
       '  <span class="skeleton-' + slug + '__indicator">01 · 01</span>' +
       '  <button class="skeleton-' + slug + '__thumbs-toggle" type="button" aria-expanded="false">PAGES</button>' +
       '</header>' +
@@ -757,7 +925,8 @@ button { cursor: pointer; }
       '  <button class="skeleton-' + slug + '__zone skeleton-' + slug + '__zone--prev" type="button" aria-label="Previous"></button>' +
       '  <button class="skeleton-' + slug + '__zone skeleton-' + slug + '__zone--next" type="button" aria-label="Next"></button>' +
       '</div>' +
-      '<nav class="skeleton-' + slug + '__thumbs" aria-label="Pages"></nav>';
+      '<nav class="skeleton-' + slug + '__thumbs" aria-label="Pages"></nav>' +
+      '<section class="skeleton-' + slug + '__details" role="tabpanel">' + sanitizeDetails(state.detailsHtml || '') + '</section>';
     previewFrame.innerHTML = '';
     previewFrame.appendChild(root);
     if (window.__skeletonReboot) window.__skeletonReboot(slug);

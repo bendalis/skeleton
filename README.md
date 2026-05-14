@@ -10,7 +10,7 @@ Minimalist PDF book previewer for Webflow. Drop a PDF, get a paste-ready embed s
 | 2 | Open `configurator.html` in a browser |
 | 3 | Drop the PDF file into the drop zone (for live preview) |
 | 4 | Type the path of the PDF on byoung.co (e.g. `book.pdf`); the configurator prepends `https://www.byoung.co/` |
-| 5 | Adjust slug, toggles, theme |
+| 5 | Adjust slug, toggles, theme, project details |
 | 6 | Click **Copy snippet** |
 | 7 | Paste into an HTML Embed component on a Webflow page at `/skeleton/{slug}` |
 
@@ -93,6 +93,7 @@ Webflow's HTML Embed component is limited to 10,000 characters. The configurator
 | Theme | Light, Dark, or Auto. Auto follows OS, persisted per slug in `sessionStorage` |
 | Reduced motion | Page transitions become instant when the OS setting is on |
 | Multiple embeds | Supported via slug scoping. Same slug twice on one page collides; pick unique slugs |
+| Project details | Optional rich-text field in the configurator. Shows behind a DETAILS tab in the chrome bar. Hidden if empty. Allowed tags: h2-h4, p, strong, em, a, ul, ol, li, blockquote, code, hr, br. Persisted per-tab choice in sessionStorage |
 
 ## Known limits
 

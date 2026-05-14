@@ -165,8 +165,37 @@
     var themeBtn = root.querySelector('.skeleton-' + config.slug + '__theme');
     var prevZone = root.querySelector('.skeleton-' + config.slug + '__zone--prev');
     var nextZone = root.querySelector('.skeleton-' + config.slug + '__zone--next');
+    var details = root.querySelector('.skeleton-' + config.slug + '__details');
+    var tabPages = root.querySelector('.skeleton-' + config.slug + '__tab--pages');
+    var tabDetails = root.querySelector('.skeleton-' + config.slug + '__tab--details');
     injectRuntimeCss();
     applyTheme();
+    initTabs();
+
+    function detailsHasContent() {
+      if (!details) return false;
+      if (details.textContent.trim()) return true;
+      return !!details.querySelector('img,iframe,hr');
+    }
+
+    function initTabs() {
+      if (!tabPages || !tabDetails) return;
+      if (!detailsHasContent()) {
+        tabDetails.style.display = 'none';
+        setTab('pages');
+        return;
+      }
+      var tabKey = 'skeleton-tab-' + config.slug;
+      var saved = sessionStorage.getItem(tabKey);
+      setTab(saved === 'details' ? 'details' : 'pages');
+    }
+
+    function setTab(tab) {
+      root.setAttribute('data-tab', tab);
+      if (tabPages) tabPages.setAttribute('aria-selected', tab === 'pages' ? 'true' : 'false');
+      if (tabDetails) tabDetails.setAttribute('aria-selected', tab === 'details' ? 'true' : 'false');
+      sessionStorage.setItem('skeleton-tab-' + config.slug, tab);
+    }
 
     function injectRuntimeCss() {
       var id = 'skeleton-rt-' + config.slug;
@@ -178,6 +207,25 @@
       styleEl.textContent =
         s + '__slot{flex:1;display:flex;align-items:center;justify-content:center;max-height:100%;min-width:0;min-height:0}' +
         s + '__slot canvas{display:block;max-width:100%;max-height:100%;width:auto;height:auto}' +
+        s + '__tabs{display:flex;gap:0;align-items:stretch}' +
+        s + '__tab{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;background:transparent;border:none;cursor:pointer;padding:14px 10px;color:var(--muted);min-height:44px;border-bottom:1px solid transparent;margin-bottom:-1px}' +
+        s + '__tab[aria-selected="true"]{color:var(--fg);border-bottom-color:currentColor}' +
+        s + '__details{display:none;padding:24px 16px;max-width:720px;margin:0 auto;line-height:1.6;color:var(--fg);overflow:auto;flex:1}' +
+        s + '[data-tab="details"] ' + s + '__details{display:block}' +
+        s + '[data-tab="details"] ' + s + '__stage{display:none}' +
+        s + '[data-tab="details"] ' + s + '__thumbs{display:none}' +
+        s + '[data-tab="details"] ' + s + '__indicator{visibility:hidden}' +
+        s + '__details h2{font-size:18px;font-weight:500;margin:24px 0 8px}' +
+        s + '__details h2:first-child{margin-top:0}' +
+        s + '__details h3{font-size:16px;font-weight:500;margin:20px 0 6px}' +
+        s + '__details h4{font-size:14px;font-weight:500;margin:16px 0 4px}' +
+        s + '__details p{margin:0 0 12px}' +
+        s + '__details ul,' + s + '__details ol{margin:0 0 12px;padding-left:20px}' +
+        s + '__details li{margin-bottom:4px}' +
+        s + '__details a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}' +
+        s + '__details blockquote{margin:12px 0;padding-left:12px;border-left:1px solid var(--border);color:var(--muted)}' +
+        s + '__details code{font-family:"JetBrains Mono",monospace;font-size:0.9em;background:var(--border);padding:1px 4px;border-radius:2px}' +
+        s + '__details hr{border:none;border-top:1px solid var(--border);margin:24px 0}' +
         '@media (min-width:769px){' +
         s + '{height:100vh;max-height:100vh;overflow:hidden}' +
         s + '__thumbs-toggle{visibility:hidden;pointer-events:none}' +
@@ -479,6 +527,9 @@
         if (!btn) return;
         jump(parseInt(btn.getAttribute('data-page'), 10));
       }, opts);
+
+      if (tabPages) tabPages.addEventListener('click', function () { setTab('pages'); }, opts);
+      if (tabDetails) tabDetails.addEventListener('click', function () { setTab('details'); }, opts);
 
       darkMq.addEventListener('change', function () { if (themeMode === 'auto') applyTheme(); }, opts);
 
