@@ -376,6 +376,55 @@ button { cursor: pointer; }
 }
 .skeleton-preview__zone--prev { left: 0; }
 .skeleton-preview__zone--next { right: 0; }
+.skeleton-preview__zone > span {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 32px;
+  line-height: 1;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+  font-family: -apple-system, system-ui, sans-serif;
+}
+.skeleton-preview__zone--prev > span { left: 20px; }
+.skeleton-preview__zone--next > span { right: 20px; }
+@media (hover: hover) {
+  .skeleton-preview__zone:hover > span { opacity: 0.7; }
+}
+.skeleton-preview[data-tab="details"] .skeleton-preview__zone > span { opacity: 0 !important; }
+.skeleton-preview__skeleton-placeholder {
+  flex: none;
+  width: min(60%, 420px);
+  aspect-ratio: 4 / 5;
+  border: 1px solid var(--border);
+  background: transparent;
+  margin: auto;
+  animation: skeleton-pulse 1.2s ease-in-out infinite;
+}
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.skeleton-preview__kbd-hint {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 400ms ease;
+  pointer-events: none;
+  z-index: 2;
+}
+.skeleton-preview__kbd-hint[data-show="true"] { opacity: 0.6; }
+@media (hover: none) {
+  .skeleton-preview__kbd-hint { display: none; }
+}
 .skeleton-preview__thumbs {
   display: flex;
   gap: 4px;
@@ -407,8 +456,9 @@ button { cursor: pointer; }
   height: 80px;
   background: var(--border);
 }
-.skeleton-preview__thumbs button[data-active="true"] canvas { outline: 1px solid var(--accent); }
+.skeleton-preview__thumbs button[data-active="true"] canvas { outline: 2px solid var(--accent); }
 .skeleton-preview__thumbs button[data-active="true"] { color: var(--fg); }
+.skeleton-preview__thumbs button[data-active="true"]::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); margin-top: 4px; }
 .skeleton-preview__thumbs button span {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
@@ -428,8 +478,13 @@ button { cursor: pointer; }
   min-height: 44px;
   border-bottom: 1px solid transparent;
   margin-bottom: -1px;
+  transition: color 150ms ease, border-color 150ms ease;
 }
-.skeleton-preview__tab[aria-selected="true"] { color: var(--fg); border-bottom-color: currentColor; }
+.skeleton-preview__tab[aria-selected="true"] { color: var(--fg); border-bottom: 2px solid currentColor; margin-bottom: -2px; }
+.skeleton-preview__tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (hover: hover) {
+  .skeleton-preview__tab:not([aria-selected="true"]):hover { color: var(--fg); border-bottom: 1px dashed var(--border); }
+}
 .skeleton-preview__details {
   display: none;
   padding: 32px 16px;
@@ -473,6 +528,7 @@ button { cursor: pointer; }
 }
 @media (prefers-reduced-motion: reduce) {
   .skeleton-preview__spread { transition: none; }
+  .skeleton-preview__skeleton-placeholder { animation: none; }
 }
 
 @media (max-width: 900px) {
@@ -595,17 +651,30 @@ button { cursor: pointer; }
       s + '__zone{position:absolute;top:0;height:100%;width:30%;background:transparent;border:none;cursor:pointer;padding:0}',
       s + '__zone--prev{left:0}',
       s + '__zone--next{right:0}',
+      s + '__zone>span{position:absolute;top:50%;transform:translateY(-50%);font-size:32px;line-height:1;color:var(--muted);opacity:0;transition:opacity 200ms ease;pointer-events:none;font-family:-apple-system,system-ui,sans-serif}',
+      s + '__zone--prev>span{left:20px}',
+      s + '__zone--next>span{right:20px}',
+      '@media (hover:hover){' + s + '__zone:hover>span{opacity:0.7}}',
+      s + '[data-tab="details"] ' + s + '__zone>span{opacity:0 !important}',
+      s + '__skeleton-placeholder{flex:none;width:min(60%,420px);aspect-ratio:4/5;border:1px solid var(--border);background:transparent;margin:auto;animation:skeleton-pulse 1.2s ease-in-out infinite}',
+      '@keyframes skeleton-pulse{0%,100%{opacity:1}50%{opacity:0.4}}',
+      s + '__kbd-hint{position:absolute;top:12px;left:50%;transform:translateX(-50%);font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.16em;color:var(--muted);opacity:0;transition:opacity 400ms ease;pointer-events:none;z-index:2}',
+      s + '__kbd-hint[data-show="true"]{opacity:0.6}',
+      '@media (hover:none){' + s + '__kbd-hint{display:none}}',
       s + '__thumbs{display:flex;gap:4px;overflow-x:auto;scroll-snap-type:x mandatory;padding:8px 12px;border-top:1px solid var(--border);-webkit-overflow-scrolling:touch;scrollbar-width:none}',
       s + '__thumbs::-webkit-scrollbar{display:none}',
       s + '__thumbs button{flex-shrink:0;min-width:44px;background:transparent;border:none;cursor:pointer;scroll-snap-align:start;padding:4px 2px;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted)}',
       s + '__thumbs button canvas{display:block;width:60px;height:80px;background:var(--border)}',
-      s + '__thumbs button[data-active="true"] canvas{outline:1px solid var(--accent)}',
+      s + '__thumbs button[data-active="true"] canvas{outline:2px solid var(--accent)}',
       s + '__thumbs button[data-active="true"]{color:var(--fg)}',
+      s + '__thumbs button[data-active="true"]::after{content:"";display:block;width:4px;height:4px;border-radius:50%;background:var(--accent);margin-top:4px}',
       s + '__thumbs button span{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em}',
       s + '__page-footer{display:none;padding:8px 12px;border-top:1px solid var(--border);font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);text-align:center;background:var(--bg)}',
       s + '__tabs{display:flex;gap:0;align-items:stretch}',
-      s + '__tab{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;background:transparent;border:none;cursor:pointer;padding:14px 10px;color:var(--muted);min-height:44px;border-bottom:1px solid transparent;margin-bottom:-1px}',
-      s + '__tab[aria-selected="true"]{color:var(--fg);border-bottom-color:currentColor}',
+      s + '__tab{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;background:transparent;border:none;cursor:pointer;padding:14px 10px;color:var(--muted);min-height:44px;border-bottom:1px solid transparent;margin-bottom:-1px;transition:color 150ms ease,border-color 150ms ease}',
+      s + '__tab[aria-selected="true"]{color:var(--fg);border-bottom:2px solid currentColor;margin-bottom:-2px}',
+      s + '__tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}',
+      '@media (hover:hover){' + s + '__tab:not([aria-selected="true"]):hover{color:var(--fg);border-bottom:1px dashed var(--border)}}',
       s + '__details{display:none;padding:32px 16px;max-width:720px;margin:0 auto;line-height:1.65;font-size:14px;color:var(--fg);overflow:auto;flex:1;width:100%;box-sizing:border-box}',
       s + '[data-tab="details"] ' + s + '__details{display:block}',
       s + '[data-tab="details"] ' + s + '__stage{display:none}',
@@ -639,6 +708,7 @@ button { cursor: pointer; }
       '}',
       '@media (prefers-reduced-motion:reduce){',
       s + '__spread{transition:none}',
+      s + '__skeleton-placeholder{animation:none}',
       '}'
     ].join('');
   }
@@ -664,8 +734,9 @@ button { cursor: pointer; }
       '  </header>\n' +
       '  <div class="skeleton-' + s + '__stage" role="region">\n' +
       '    <div class="skeleton-' + s + '__spread"></div>\n' +
-      '    <button class="skeleton-' + s + '__zone skeleton-' + s + '__zone--prev" type="button" aria-label="Previous"></button>\n' +
-      '    <button class="skeleton-' + s + '__zone skeleton-' + s + '__zone--next" type="button" aria-label="Next"></button>\n' +
+      '    <button class="skeleton-' + s + '__zone skeleton-' + s + '__zone--prev" type="button" aria-label="Previous"><span aria-hidden="true">‹</span></button>\n' +
+      '    <button class="skeleton-' + s + '__zone skeleton-' + s + '__zone--next" type="button" aria-label="Next"><span aria-hidden="true">›</span></button>\n' +
+      '    <div class="skeleton-' + s + '__kbd-hint">←  →</div>\n' +
       '  </div>\n' +
       '  <nav class="skeleton-' + s + '__thumbs" aria-label="Pages"></nav>\n' +
       '  <section class="skeleton-' + s + '__details" role="tabpanel">' + detailsHtml + '</section>\n' +
@@ -949,8 +1020,9 @@ button { cursor: pointer; }
       '</header>' +
       '<div class="skeleton-' + slug + '__stage" role="region">' +
       '  <div class="skeleton-' + slug + '__spread"></div>' +
-      '  <button class="skeleton-' + slug + '__zone skeleton-' + slug + '__zone--prev" type="button" aria-label="Previous"></button>' +
-      '  <button class="skeleton-' + slug + '__zone skeleton-' + slug + '__zone--next" type="button" aria-label="Next"></button>' +
+      '  <button class="skeleton-' + slug + '__zone skeleton-' + slug + '__zone--prev" type="button" aria-label="Previous"><span aria-hidden="true">‹</span></button>' +
+      '  <button class="skeleton-' + slug + '__zone skeleton-' + slug + '__zone--next" type="button" aria-label="Next"><span aria-hidden="true">›</span></button>' +
+      '  <div class="skeleton-' + slug + '__kbd-hint">←  →</div>' +
       '</div>' +
       '<nav class="skeleton-' + slug + '__thumbs" aria-label="Pages"></nav>' +
       '<section class="skeleton-' + slug + '__details" role="tabpanel">' + sanitizeDetails(state.detailsHtml || '') + '</section>' +
