@@ -590,7 +590,7 @@ button { cursor: pointer; }
   'use strict';
 
   var GH_USER = 'bendalis';
-  var GH_TAG = 'v1.2.1';
+  var GH_TAG = 'v1.2.2';
   var BASE_URL = 'https://www.byoung.co/';
   document.getElementById('verLabel').textContent = GH_TAG;
 
@@ -673,6 +673,7 @@ button { cursor: pointer; }
       s + '__details{padding:40px 32px}',
       '}',
       '@media (max-width:768px){',
+      s + '__thumbs-toggle{display:none}',
       s + '__thumbs{display:none;max-height:96px}',
       s + '__thumbs[data-open="true"]{display:flex}',
       s + '__spread{justify-content:center !important}',

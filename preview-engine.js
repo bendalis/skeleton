@@ -342,6 +342,7 @@
         s + '__details{padding:40px 32px}' +
         '}' +
         '@media (max-width:768px){' +
+        s + '__thumbs-toggle{display:none}' +
         s + '__page-footer{display:block}' +
         s + '[data-tab="details"] ' + s + '__page-footer{display:none}' +
         '}';
