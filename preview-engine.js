@@ -144,9 +144,7 @@
     var firstPageViewport = null;
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var themeKey = 'skeleton-theme-' + config.slug;
-    var themeMode = sessionStorage.getItem(themeKey) || config.theme || 'auto';
-    var darkMq = window.matchMedia('(prefers-color-scheme: dark)');
+    // Theme is now always light. (Dark mode was removed.)
 
     if (!window.__skeletonAborts) window.__skeletonAborts = {};
     if (window.__skeletonAborts[config.slug]) {
@@ -177,6 +175,21 @@
     function upgradeMarkup() {
       var sl = config.slug;
       var chrome = root.querySelector('.skeleton-' + sl + '__chrome');
+      // Replace legacy theme button with SKELETON brand label
+      var legacyTheme = root.querySelector('.skeleton-' + sl + '__theme');
+      var brand = root.querySelector('.skeleton-' + sl + '__brand');
+      if (!brand) {
+        brand = document.createElement('span');
+        brand.className = 'skeleton-' + sl + '__brand';
+        brand.textContent = 'SKELETON';
+        if (legacyTheme && legacyTheme.parentNode) {
+          legacyTheme.parentNode.replaceChild(brand, legacyTheme);
+        } else if (chrome) {
+          chrome.insertBefore(brand, chrome.firstChild);
+        }
+      } else if (legacyTheme && legacyTheme.parentNode) {
+        legacyTheme.parentNode.removeChild(legacyTheme);
+      }
       if (chrome && (!tabPages || !tabDetails)) {
         var tabs = document.createElement('div');
         tabs.className = 'skeleton-' + sl + '__tabs';
@@ -277,6 +290,9 @@
       var styleEl = document.createElement('style');
       styleEl.id = id;
       styleEl.textContent =
+        s + '__theme{display:none}' +
+        s + '__brand{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg);padding:14px 4px;min-height:44px;display:inline-flex;align-items:center}' +
+        s + '[data-theme="dark"]{--bg:#FAFAF7;--fg:#111;--muted:#6B6B6B;--border:#E5E5E0;--accent:#111}' +
         s + '__spread{align-items:stretch}' +
         s + '__slot{flex:1;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;max-height:100%}' +
         s + '__slot canvas{display:block;max-width:100%;max-height:100%;width:auto;height:auto}' +
@@ -364,16 +380,7 @@
     }
 
     function applyTheme() {
-      var effective = themeMode === 'auto' ? (darkMq.matches ? 'dark' : 'light') : themeMode;
-      root.setAttribute('data-theme', effective);
-      if (themeBtn) {
-        themeBtn.setAttribute('data-mode', themeMode);
-        var label = themeMode === 'auto'
-          ? 'Theme: Auto (' + effective + '), click to override'
-          : 'Theme: ' + (themeMode === 'light' ? 'Light' : 'Dark') + ', click to cycle';
-        themeBtn.setAttribute('title', label);
-        themeBtn.setAttribute('aria-label', label);
-      }
+      root.setAttribute('data-theme', 'light');
     }
 
     function removePlaceholder() {
@@ -392,12 +399,6 @@
       setTimeout(function () {
         hint.setAttribute('data-show', 'false');
       }, 3000);
-    }
-
-    function cycleTheme() {
-      themeMode = themeMode === 'auto' ? 'light' : themeMode === 'light' ? 'dark' : 'auto';
-      sessionStorage.setItem(themeKey, themeMode);
-      applyTheme();
     }
 
     function rebuild() {
@@ -639,7 +640,6 @@
 
       if (prevZone) prevZone.addEventListener('click', function () { go(-1); }, opts);
       if (nextZone) nextZone.addEventListener('click', function () { go(1); }, opts);
-      if (themeBtn) themeBtn.addEventListener('click', cycleTheme, opts);
       if (thumbsToggle) thumbsToggle.addEventListener('click', function () {
         var open = thumbs.getAttribute('data-open') === 'true';
         thumbs.setAttribute('data-open', open ? 'false' : 'true');
@@ -653,8 +653,6 @@
 
       if (tabPages) tabPages.addEventListener('click', function () { setTab('pages'); }, opts);
       if (tabDetails) tabDetails.addEventListener('click', function () { setTab('details'); }, opts);
-
-      darkMq.addEventListener('change', function () { if (themeMode === 'auto') applyTheme(); }, opts);
 
       document.addEventListener('keydown', function (e) {
         if (!root.isConnected) return;
