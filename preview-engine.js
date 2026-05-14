@@ -293,8 +293,10 @@
         s + '__theme{display:none}' +
         s + '__brand{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg);padding:14px 4px;min-height:44px;display:inline-flex;align-items:center}' +
         s + '[data-theme="dark"]{--bg:#FAFAF7;--fg:#111;--muted:#6B6B6B;--border:#E5E5E0;--accent:#111}' +
-        s + '__spread{align-items:stretch}' +
+        s + '__spread{align-items:stretch;gap:0}' +
         s + '__slot{flex:1;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;max-height:100%}' +
+        s + '__spread>' + s + '__slot:first-child:not(:only-child){justify-content:flex-end}' +
+        s + '__spread>' + s + '__slot:last-child:not(:only-child){justify-content:flex-start}' +
         s + '__slot canvas{display:block;max-width:100%;max-height:100%;width:auto;height:auto}' +
         s + '__zone{position:relative}' +
         s + '__zone>span{position:absolute;top:50%;transform:translateY(-50%);font-size:32px;line-height:1;color:var(--muted);opacity:0;transition:opacity 200ms ease;pointer-events:none;font-family:-apple-system,system-ui,sans-serif}' +

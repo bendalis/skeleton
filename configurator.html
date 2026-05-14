@@ -313,7 +313,7 @@ button { cursor: pointer; }
   width: 100%;
   align-items: stretch;
   justify-content: center;
-  gap: 8px;
+  gap: 0;
   transition: opacity 200ms;
 }
 .skeleton-preview__page-footer {
@@ -340,6 +340,8 @@ button { cursor: pointer; }
   min-width: 0;
   min-height: 0;
 }
+.skeleton-preview__spread > .skeleton-preview__slot:first-child:not(:only-child) { justify-content: flex-end; }
+.skeleton-preview__spread > .skeleton-preview__slot:last-child:not(:only-child) { justify-content: flex-start; }
 .skeleton-preview__slot canvas {
   display: block;
   max-width: 100%;
@@ -624,11 +626,13 @@ button { cursor: pointer; }
       s + '__indicator{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)}',
       s + '__thumbs-toggle{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;background:transparent;border:none;cursor:pointer;padding:0 14px;color:var(--fg);min-height:44px}',
       s + '__stage{position:relative;touch-action:pan-y;flex:1;overflow:hidden;min-height:480px;display:flex;align-items:center;justify-content:center;padding:16px}',
-      s + '__spread{display:flex;height:100%;width:100%;align-items:stretch;justify-content:center;gap:8px;transition:opacity 200ms}',
+      s + '__spread{display:flex;height:100%;width:100%;align-items:stretch;justify-content:center;gap:0;transition:opacity 200ms}',
       s + '__spread[data-align="right"]{justify-content:flex-end}',
       s + '__spread[data-align="left"]{justify-content:flex-start}',
       s + '__spread[data-align="center"]{justify-content:center}',
       s + '__slot{flex:1;display:flex;align-items:center;justify-content:center;max-height:100%;min-width:0;min-height:0}',
+      s + '__spread>' + s + '__slot:first-child:not(:only-child){justify-content:flex-end}',
+      s + '__spread>' + s + '__slot:last-child:not(:only-child){justify-content:flex-start}',
       s + '__slot canvas{display:block;max-width:100%;max-height:100%;width:auto;height:auto;filter:drop-shadow(0 4px 4px rgba(0,0,0,0.05))}',
       s + '__zone{position:absolute;top:0;height:100%;width:30%;background:transparent;border:none;cursor:pointer;padding:0}',
       s + '__zone--prev{left:0}',
