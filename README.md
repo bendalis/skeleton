@@ -90,7 +90,6 @@ Webflow's HTML Embed component is limited to 10,000 characters. The configurator
 |---|---|
 | Cross-origin PDF | The PDF URL must allow CORS for the Webflow domain. Webflow asset URLs are fine |
 | Mobile | Force single-page mode under 768px viewport. Swipe + tap zones |
-| Theme | Light, Dark, or Auto. Auto follows OS, persisted per slug in `sessionStorage` |
 | Reduced motion | Page transitions become instant when the OS setting is on |
 | Multiple embeds | Supported via slug scoping. Same slug twice on one page collides; pick unique slugs |
 | Project details | Optional rich-text field in the configurator. Shows behind a DETAILS tab in the chrome bar. Hidden if empty. Allowed tags: h2-h4, p, strong, em, a, ul, ol, li, blockquote, code, hr, br. Persisted per-tab choice in sessionStorage |

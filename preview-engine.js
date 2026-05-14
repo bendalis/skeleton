@@ -144,7 +144,6 @@
     var firstPageViewport = null;
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    // Theme is now always light. (Dark mode was removed.)
 
     if (!window.__skeletonAborts) window.__skeletonAborts = {};
     if (window.__skeletonAborts[config.slug]) {
@@ -160,7 +159,6 @@
     var indicator = root.querySelector('.skeleton-' + config.slug + '__indicator');
     var thumbsToggle = root.querySelector('.skeleton-' + config.slug + '__thumbs-toggle');
     var thumbs = root.querySelector('.skeleton-' + config.slug + '__thumbs');
-    var themeBtn = root.querySelector('.skeleton-' + config.slug + '__theme');
     var prevZone = root.querySelector('.skeleton-' + config.slug + '__zone--prev');
     var nextZone = root.querySelector('.skeleton-' + config.slug + '__zone--next');
     var details = root.querySelector('.skeleton-' + config.slug + '__details');
@@ -169,7 +167,6 @@
     var pageFooter = root.querySelector('.skeleton-' + config.slug + '__page-footer');
     upgradeMarkup();
     injectRuntimeCss();
-    applyTheme();
     initTabs();
 
     function upgradeMarkup() {
@@ -252,7 +249,11 @@
         }).then(function (html) {
           details.innerHTML = html;
           if (typeof initTabs === 'function') initTabs();
-        }).catch(function () { /* silent */ });
+        }).catch(function () {
+          // Fetch failed (e.g. host CSP blocks the details origin). Re-run
+          // initTabs so the now-still-empty details tab hides itself.
+          if (typeof initTabs === 'function') initTabs();
+        });
       }
     }
 
@@ -292,7 +293,6 @@
       styleEl.textContent =
         s + '__theme{display:none}' +
         s + '__brand{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg);padding:14px 4px;min-height:44px;display:inline-flex;align-items:center}' +
-        s + '[data-theme="dark"]{--bg:#FAFAF7;--fg:#111;--muted:#6B6B6B;--border:#E5E5E0;--accent:#111}' +
         s + '__spread{align-items:stretch;gap:0}' +
         s + '__slot{flex:1;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;max-height:100%}' +
         s + '__spread>' + s + '__slot:first-child:not(:only-child){justify-content:flex-end}' +
@@ -349,7 +349,13 @@
     }
 
     var source = config.pdfData ? { data: config.pdfData } : { url: config.pdfUrl };
-    pdfjsLib.getDocument(source).promise.then(function (doc) {
+    pdfjsLib.getDocument(source).promise.catch(function (err) {
+      // CDN edges occasionally answer PDF.js range requests with 416 on cold
+      // cache fills. Retry once without range/streaming so the whole PDF is
+      // fetched as a single response.
+      if (config.pdfData || !isLikelyRangeError(err)) throw err;
+      return pdfjsLib.getDocument({ url: config.pdfUrl, disableRange: true, disableStream: true }).promise;
+    }).then(function (doc) {
       pdf = doc;
       totalPages = doc.numPages;
       return detectLogicalPages(doc, !!config.frontSolo, !!config.backSolo).then(function (slots) {
@@ -368,6 +374,12 @@
       showError(err && err.message ? err.message : 'Failed to load PDF');
     });
 
+    function isLikelyRangeError(err) {
+      if (!err) return false;
+      if (err.name === 'UnexpectedResponseException') return true;
+      return /Unexpected server response|416/.test(err.message || '');
+    }
+
     function showError(msg) {
       spread.innerHTML = '';
       var box = document.createElement('div');
@@ -379,10 +391,6 @@
       box.style.textTransform = 'uppercase';
       box.textContent = 'PDF unavailable: ' + msg;
       spread.appendChild(box);
-    }
-
-    function applyTheme() {
-      root.setAttribute('data-theme', 'light');
     }
 
     function removePlaceholder() {

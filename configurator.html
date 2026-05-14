@@ -564,18 +564,6 @@ button { cursor: pointer; }
     </div>
 
     <div class="field">
-      <label>Theme</label>
-      <div class="radio-row">
-        <input type="radio" name="theme" value="auto" id="themeAuto" checked>
-        <label for="themeAuto">Auto</label>
-        <input type="radio" name="theme" value="light" id="themeLight">
-        <label for="themeLight">Light</label>
-        <input type="radio" name="theme" value="dark" id="themeDark">
-        <label for="themeDark">Dark</label>
-      </div>
-    </div>
-
-    <div class="field">
       <label>Project details (optional)</label>
       <div class="details-mount"><div id="detailsEditor"></div></div>
       <div class="hint">Todos, costs, dimensions, spec notes. Appears under a DETAILS tab in the embed.</div>
@@ -602,7 +590,7 @@ button { cursor: pointer; }
   'use strict';
 
   var GH_USER = 'bendalis';
-  var GH_TAG = 'main';
+  var GH_TAG = 'v1.2.0';
   var BASE_URL = 'https://www.byoung.co/';
   document.getElementById('verLabel').textContent = GH_TAG;
 
@@ -708,7 +696,7 @@ button { cursor: pointer; }
     var s = slug;
     var detailsHtml = sanitizeDetails(state.detailsHtml || '');
     return (
-      '<div class="skeleton skeleton-' + s + '" data-pdf="' + attrEsc(state.pdfUrl) + '" data-slug="' + s + '" data-front-solo="' + state.frontSolo + '" data-back-solo="' + state.backSolo + '" data-theme="' + state.theme + '" data-tab="pages">\n' +
+      '<div class="skeleton skeleton-' + s + '" data-pdf="' + attrEsc(state.pdfUrl) + '" data-slug="' + s + '" data-front-solo="' + state.frontSolo + '" data-back-solo="' + state.backSolo + '" data-tab="pages">\n' +
       '  <header class="skeleton-' + s + '__chrome">\n' +
       '    <span class="skeleton-' + s + '__brand">SKELETON</span>\n' +
       '    <div class="skeleton-' + s + '__tabs">\n' +
@@ -730,7 +718,7 @@ button { cursor: pointer; }
       '</div>\n' +
       '<style>' + css + '</style>\n' +
       '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap">\n' +
-      '<script>window.__SKELETON__=(window.__SKELETON__||{});window.__SKELETON__["' + s + '"]={pdfUrl:"' + jsEsc(state.pdfUrl) + '",slug:"' + s + '",frontSolo:' + state.frontSolo + ',backSolo:' + state.backSolo + ',theme:"' + state.theme + '"};<\/script>\n' +
+      '<script>window.__SKELETON__=(window.__SKELETON__||{});window.__SKELETON__["' + s + '"]={pdfUrl:"' + jsEsc(state.pdfUrl) + '",slug:"' + s + '",frontSolo:' + state.frontSolo + ',backSolo:' + state.backSolo + '};<\/script>\n' +
       '<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer><\/script>\n' +
       '<script src="https://cdn.jsdelivr.net/gh/' + GH_USER + '/skeleton@' + GH_TAG + '/preview-engine.js" defer><\/script>'
     );
@@ -823,7 +811,6 @@ button { cursor: pointer; }
     slug: '',
     frontSolo: true,
     backSolo: true,
-    theme: 'auto',
     detailsHtml: ''
   };
 
@@ -834,7 +821,6 @@ button { cursor: pointer; }
   var urlField = document.getElementById('urlField');
   var frontSoloInput = document.getElementById('frontSolo');
   var backSoloInput = document.getElementById('backSolo');
-  var themeRadios = document.querySelectorAll('input[name="theme"]');
   var copyBtn = document.getElementById('copyBtn');
   var counter = document.getElementById('counter');
   var counterText = document.getElementById('counterText');
@@ -928,9 +914,6 @@ button { cursor: pointer; }
   });
   frontSoloInput.addEventListener('change', function () { state.frontSolo = frontSoloInput.checked; updateCounter(); schedulePreview(); });
   backSoloInput.addEventListener('change', function () { state.backSolo = backSoloInput.checked; updateCounter(); schedulePreview(); });
-  themeRadios.forEach(function (r) {
-    r.addEventListener('change', function () { if (r.checked) { state.theme = r.value; updateCounter(); schedulePreview(); } });
-  });
 
   // Validation
   function validUrl(u) { return /^https?:\/\/[^\s]+\.pdf(\?.*)?$/i.test(u); }
@@ -981,18 +964,19 @@ button { cursor: pointer; }
     window.__SKELETON__ = window.__SKELETON__ || {};
     window.__SKELETON__[slug] = {
       pdfUrl: state.pdfUrl,
-      pdfData: state.pdfData,
+      // PDF.js transfers and detaches the ArrayBuffer on first use. Pass a
+      // fresh copy each render so re-renders (after toggling settings) still
+      // have valid bytes.
+      pdfData: state.pdfData ? state.pdfData.slice(0) : null,
       slug: slug,
       frontSolo: state.frontSolo,
-      backSolo: state.backSolo,
-      theme: state.theme
+      backSolo: state.backSolo
     };
     var root = document.createElement('div');
     root.className = 'skeleton skeleton-' + slug;
     root.setAttribute('data-slug', slug);
     root.setAttribute('data-front-solo', state.frontSolo);
     root.setAttribute('data-back-solo', state.backSolo);
-    root.setAttribute('data-theme', state.theme);
     root.setAttribute('data-tab', 'pages');
     root.innerHTML =
       '<header class="skeleton-' + slug + '__chrome">' +
