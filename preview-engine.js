@@ -413,19 +413,34 @@
       }
     }
 
+    function isSameSourceSpread(view) {
+      if (!view || view.type !== 'spread' || view.pages.length !== 2) return false;
+      var a = logicalPages[view.pages[0] - 1];
+      var b = logicalPages[view.pages[1] - 1];
+      return !!a && !!b && a.pdfPage === b.pdfPage && a.half === 'left' && b.half === 'right';
+    }
+
     function renderCurrent() {
       var view = views[index];
       if (!view) return;
       spread.setAttribute('data-align', alignmentFor(view.type, isMobile));
       spread.innerHTML = '';
-      view.pages.forEach(function (logical) {
-        var slot = logicalPages[logical - 1];
-        if (!slot) return;
+      if (isSameSourceSpread(view)) {
+        var a = logicalPages[view.pages[0] - 1];
         var slotEl = document.createElement('div');
         slotEl.className = 'skeleton-' + config.slug + '__slot';
         spread.appendChild(slotEl);
-        renderSlot(slot, slotEl);
-      });
+        renderSlot({ pdfPage: a.pdfPage, half: 'full' }, slotEl);
+      } else {
+        view.pages.forEach(function (logical) {
+          var slot = logicalPages[logical - 1];
+          if (!slot) return;
+          var slotEl = document.createElement('div');
+          slotEl.className = 'skeleton-' + config.slug + '__slot';
+          spread.appendChild(slotEl);
+          renderSlot(slot, slotEl);
+        });
+      }
       updateIndicator();
       updateActiveThumb();
       prefetchAdjacent();
@@ -507,13 +522,16 @@
       var nextView = views[index + 1];
       if (!nextView) return;
       requestIdleCallback(function () {
-        var slotCount = nextView.pages.length;
+        // Same-source spread renders as a single full-page slot
+        var joint = isSameSourceSpread(nextView);
+        var prefetchSlots = joint
+          ? [{ pdfPage: logicalPages[nextView.pages[0] - 1].pdfPage, half: 'full' }]
+          : nextView.pages.map(function (logical) { return logicalPages[logical - 1]; }).filter(Boolean);
+        var slotCount = prefetchSlots.length;
         var availableWidth = stage.clientWidth - 32;
         var slotWidth = slotCount > 1 ? (availableWidth - 8) / slotCount : availableWidth;
         var slotHeight = stage.clientHeight - 32;
-        nextView.pages.forEach(function (logical) {
-          var slot = logicalPages[logical - 1];
-          if (!slot) return;
+        prefetchSlots.forEach(function (slot) {
           var key = slot.pdfPage;
           if (pageCache.has(key)) return;
           queuedPageRender(slot.pdfPage, function (page) {
