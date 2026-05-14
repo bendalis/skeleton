@@ -168,6 +168,7 @@
     var details = root.querySelector('.skeleton-' + config.slug + '__details');
     var tabPages = root.querySelector('.skeleton-' + config.slug + '__tab--pages');
     var tabDetails = root.querySelector('.skeleton-' + config.slug + '__tab--details');
+    var pageFooter = root.querySelector('.skeleton-' + config.slug + '__page-footer');
     upgradeMarkup();
     injectRuntimeCss();
     applyTheme();
@@ -196,6 +197,13 @@
         root.appendChild(d);
         details = d;
       }
+      if (!pageFooter) {
+        var pf = document.createElement('div');
+        pf.className = 'skeleton-' + sl + '__page-footer';
+        pf.textContent = '01 · 01';
+        root.appendChild(pf);
+        pageFooter = pf;
+      }
       if (!root.getAttribute('data-tab')) root.setAttribute('data-tab', 'pages');
       var detailsUrl = config.detailsUrl || (details && details.getAttribute('data-url'));
       if (detailsUrl && !details.textContent.trim()) {
@@ -217,6 +225,7 @@
 
     function initTabs() {
       if (!tabPages || !tabDetails) return;
+      tabDetails.style.display = '';
       if (!detailsHasContent()) {
         tabDetails.style.display = 'none';
         setTab('pages');
@@ -242,8 +251,10 @@
       var styleEl = document.createElement('style');
       styleEl.id = id;
       styleEl.textContent =
-        s + '__slot{flex:1;display:flex;align-items:center;justify-content:center;max-height:100%;min-width:0;min-height:0}' +
+        s + '__spread{align-items:stretch}' +
+        s + '__slot{flex:1;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;max-height:100%}' +
         s + '__slot canvas{display:block;max-width:100%;max-height:100%;width:auto;height:auto}' +
+        s + '__page-footer{display:none;padding:8px 12px;border-top:1px solid var(--border);font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);text-align:center;background:var(--bg)}' +
         s + '__tabs{display:flex;gap:0;align-items:stretch}' +
         s + '__tab{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;background:transparent;border:none;cursor:pointer;padding:14px 10px;color:var(--muted);min-height:44px;border-bottom:1px solid transparent;margin-bottom:-1px}' +
         s + '__tab[aria-selected="true"]{color:var(--fg);border-bottom-color:currentColor}' +
@@ -266,6 +277,10 @@
         '@media (min-width:769px){' +
         s + '{height:100vh;max-height:100vh;overflow:hidden}' +
         s + '__thumbs-toggle{visibility:hidden;pointer-events:none}' +
+        '}' +
+        '@media (max-width:768px){' +
+        s + '__page-footer{display:block}' +
+        s + '[data-tab="details"] ' + s + '__page-footer{display:none}' +
         '}';
       document.head.appendChild(styleEl);
     }
@@ -342,13 +357,12 @@
     }
 
     function updateIndicator() {
-      if (!indicator) return;
       var view = views[index];
       var page = view ? view.pages[view.pages.length - 1] : 1;
-      indicator.textContent = pad(page) + ' · ' + pad(logicalPages.length);
-      if (thumbsToggle) {
-        thumbsToggle.textContent = 'PAGES';
-      }
+      var txt = pad(page) + ' · ' + pad(logicalPages.length);
+      if (indicator) indicator.textContent = txt;
+      if (pageFooter) pageFooter.textContent = txt;
+      if (thumbsToggle) thumbsToggle.textContent = 'PAGES';
     }
 
     function drawSlot(src, slot, slotEl) {

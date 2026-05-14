@@ -327,10 +327,22 @@ button { cursor: pointer; }
   display: flex;
   height: 100%;
   width: 100%;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   gap: 8px;
   transition: opacity 200ms;
+}
+.skeleton-preview__page-footer {
+  display: none;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+  background: var(--bg);
 }
 .skeleton-preview__spread[data-align="right"] { justify-content: flex-end; }
 .skeleton-preview__spread[data-align="left"] { justify-content: flex-start; }
@@ -450,6 +462,8 @@ button { cursor: pointer; }
   .skeleton-preview__thumbs[data-open="true"] { display: flex; }
   .skeleton-preview__spread { justify-content: center !important; }
   .skeleton-preview__stage { min-height: 360px; }
+  .skeleton-preview__page-footer { display: block; }
+  .skeleton-preview[data-tab="details"] .skeleton-preview__page-footer { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .skeleton-preview__spread { transition: none; }
@@ -566,7 +580,7 @@ button { cursor: pointer; }
       s + '__indicator{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)}',
       s + '__thumbs-toggle{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;background:transparent;border:none;cursor:pointer;padding:0 14px;color:var(--fg);min-height:44px}',
       s + '__stage{position:relative;touch-action:pan-y;flex:1;overflow:hidden;min-height:480px;display:flex;align-items:center;justify-content:center;padding:16px}',
-      s + '__spread{display:flex;height:100%;width:100%;align-items:center;justify-content:center;gap:8px;transition:opacity 200ms}',
+      s + '__spread{display:flex;height:100%;width:100%;align-items:stretch;justify-content:center;gap:8px;transition:opacity 200ms}',
       s + '__spread[data-align="right"]{justify-content:flex-end}',
       s + '__spread[data-align="left"]{justify-content:flex-start}',
       s + '__spread[data-align="center"]{justify-content:center}',
@@ -582,6 +596,7 @@ button { cursor: pointer; }
       s + '__thumbs button[data-active="true"] canvas{outline:1px solid var(--accent)}',
       s + '__thumbs button[data-active="true"]{color:var(--fg)}',
       s + '__thumbs button span{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em}',
+      s + '__page-footer{display:none;padding:8px 12px;border-top:1px solid var(--border);font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);text-align:center;background:var(--bg)}',
       s + '__tabs{display:flex;gap:0;align-items:stretch}',
       s + '__tab{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;background:transparent;border:none;cursor:pointer;padding:14px 10px;color:var(--muted);min-height:44px;border-bottom:1px solid transparent;margin-bottom:-1px}',
       s + '__tab[aria-selected="true"]{color:var(--fg);border-bottom-color:currentColor}',
@@ -610,6 +625,8 @@ button { cursor: pointer; }
       s + '__thumbs[data-open="true"]{display:flex}',
       s + '__spread{justify-content:center !important}',
       s + '__stage{min-height:360px}',
+      s + '__page-footer{display:block}',
+      s + '[data-tab="details"] ' + s + '__page-footer{display:none}',
       '}',
       '@media (prefers-reduced-motion:reduce){',
       s + '__spread{transition:none}',
@@ -643,6 +660,7 @@ button { cursor: pointer; }
       '  </div>\n' +
       '  <nav class="skeleton-' + s + '__thumbs" aria-label="Pages"></nav>\n' +
       '  <section class="skeleton-' + s + '__details" role="tabpanel">' + detailsHtml + '</section>\n' +
+      '  <div class="skeleton-' + s + '__page-footer">01 · 01</div>\n' +
       '</div>\n' +
       '<style>' + css + '</style>\n' +
       '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap">\n' +
@@ -926,7 +944,8 @@ button { cursor: pointer; }
       '  <button class="skeleton-' + slug + '__zone skeleton-' + slug + '__zone--next" type="button" aria-label="Next"></button>' +
       '</div>' +
       '<nav class="skeleton-' + slug + '__thumbs" aria-label="Pages"></nav>' +
-      '<section class="skeleton-' + slug + '__details" role="tabpanel">' + sanitizeDetails(state.detailsHtml || '') + '</section>';
+      '<section class="skeleton-' + slug + '__details" role="tabpanel">' + sanitizeDetails(state.detailsHtml || '') + '</section>' +
+      '<div class="skeleton-' + slug + '__page-footer">01 · 01</div>';
     previewFrame.innerHTML = '';
     previewFrame.appendChild(root);
     if (window.__skeletonReboot) window.__skeletonReboot(slug);
