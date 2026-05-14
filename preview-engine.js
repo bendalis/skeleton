@@ -175,7 +175,11 @@
       var s = '.skeleton-' + config.slug;
       var styleEl = document.createElement('style');
       styleEl.id = id;
-      styleEl.textContent = '@media (min-width:769px){' + s + '{height:100vh;max-height:100vh;overflow:hidden}}';
+      styleEl.textContent =
+        '@media (min-width:769px){' +
+        s + '{height:100vh;max-height:100vh;overflow:hidden}' +
+        s + '__thumbs-toggle{visibility:hidden;pointer-events:none}' +
+        '}';
       document.head.appendChild(styleEl);
     }
 
